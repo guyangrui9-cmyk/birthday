@@ -35,6 +35,28 @@ function saveWardrobe() {
 }
 const companion = loadImage('companion.png');
 
+function drawWalkingPlayer() {
+  if (!player.naturalWidth) return;
+  const split = Math.floor(player.height * .85);
+  const swing = Math.sin(walkingTime) * stride;
+  const half = player.width / 2;
+  pixels.save();
+  pixels.translate(canvas.width * position.x, canvas.height * position.y);
+  if (facing < 0) pixels.scale(-1, 1);
+  pixels.translate(swing * .6, -(1 - Math.cos(walkingTime * 2)) * stride);
+  pixels.drawImage(player, 0, 0, player.width, split, -half, -player.height, player.width, split);
+  for (let leg = 0; leg < 2; leg++) {
+    const side = leg === 0 ? -1 : 1;
+    pixels.save();
+    pixels.translate(side * half / 2, -player.height + split);
+    pixels.rotate(side * swing * 9 * Math.PI / 180);
+    pixels.drawImage(player, leg * half, split - 1, half, player.height - split + 1,
+      -half / 2, -1, half, player.height - split + 1);
+    pixels.restore();
+  }
+  pixels.restore();
+}
+
 function drawSprite(image, x, y, flip = false, bounce = 0) {
   if (!image.naturalWidth) return;
   const left = Math.round(canvas.width * x - image.width / 2);
@@ -142,6 +164,7 @@ document.querySelector('#interact').addEventListener('click', () => interact());
 
 let previous = performance.now();
 let walkingTime = 0;
+let stride = 0;
 let facing = 1;
 function tick(now) {
   const step = Math.min((now - previous) / 1000, .04) * .19;
@@ -161,10 +184,13 @@ function tick(now) {
   if (isWalkable(position.x, y)) position.y = y;
   const moving = oldX !== position.x || oldY !== position.y;
   if (dx) facing = Math.sign(dx);
-  walkingTime = moving ? walkingTime + step * 110 : 0;
+  const seconds = step / .19;
+  stride += ((moving ? 1 : 0) - stride) * Math.min(1, seconds * 12);
+  if (stride < .001) { stride = 0; walkingTime = 0; }
+  else walkingTime += seconds * 9;
   if (background.naturalWidth) {
     pixels.drawImage(background, 0, 0);
-    const drawPlayer = () => drawSprite(player, position.x, position.y, facing < 0, Math.round(Math.abs(Math.sin(walkingTime)) * 6));
+    const drawPlayer = drawWalkingPlayer;
     if (position.y < .64) drawPlayer();
     drawSprite(companion, .56, .64);
     if (position.y >= .64) drawPlayer();

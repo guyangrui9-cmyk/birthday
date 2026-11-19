@@ -35,6 +35,7 @@ internal sealed partial class Game : Form
     private PointF position = new PointF(.43f, .71f);
     private int facing = 1;
     private float phase;
+    private float stride;
     private double lastTick;
 
     [DllImport("user32.dll")]
@@ -130,7 +131,26 @@ internal sealed partial class Game : Form
 
     private void DrawPlayer(Graphics g)
     {
-        DrawSprite(g, worn == null ? player : worn.Image, position, facing < 0, (int)Math.Round(Math.Abs(Math.Sin(phase)) * 6));
+        Bitmap image = worn == null ? player : worn.Image;
+        float swing = (float)Math.Sin(phase) * stride;
+        int split = (int)(image.Height * .85f);
+        var state = g.Save();
+        g.TranslateTransform(GridWidth * position.X, GridHeight * position.Y);
+        if (facing < 0) g.ScaleTransform(-1, 1);
+        float bounce = (float)(1 - Math.Cos(phase * 2)) * stride;
+        g.TranslateTransform(swing * .6f, -bounce);
+        g.DrawImage(image, new RectangleF(-image.Width / 2f, -image.Height, image.Width, split), new RectangleF(0, 0, image.Width, split), GraphicsUnit.Pixel);
+        for (int leg = 0; leg < 2; leg++)
+        {
+            var limb = g.Save();
+            float side = leg == 0 ? -1 : 1;
+            float width = image.Width / 2f;
+            g.TranslateTransform(side * width / 2, -image.Height + split);
+            g.RotateTransform(side * swing * 9);
+            g.DrawImage(image, new RectangleF(-width / 2, -1, width, image.Height - split + 1), new RectangleF(leg * width, split - 1, width, image.Height - split + 1), GraphicsUnit.Pixel);
+            g.Restore(limb);
+        }
+        g.Restore(state);
     }
 
     private static void DrawSprite(Graphics g, Bitmap image, PointF foot, bool flip, int bounce)
@@ -162,7 +182,10 @@ internal sealed partial class Game : Form
         float y = position.Y + dy * step * GridWidth / (float)GridHeight;
         if (Walkable(x, position.Y)) position.X = x;
         if (Walkable(position.X, y)) position.Y = y;
-        phase = before == position ? 0 : phase + step * 110;
+        bool moving = before != position;
+        stride += ((moving ? 1f : 0f) - stride) * Math.Min(1f, seconds * 12f);
+        if (stride < .001f) { stride = 0; phase = 0; }
+        else phase += seconds * 9f;
     }
 
     private int Axis(Keys primary, Keys alternate)
