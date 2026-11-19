@@ -49,7 +49,12 @@ assert(outfitFiles.length, 'Wardrobe library is empty.');
 for (const file of outfitFiles) {
   zip.addFile(resources + 'assets/outfits/' + file, fs.readFileSync(path.join(outfitDir, file)));
 }
-zip.addFile(resources + 'outfits.js', Buffer.from('window.wardrobeOutfits = ' + JSON.stringify(outfitFiles) + ';'));
+const profiles = Object.fromEntries(fs.readFileSync(path.join(project, '代码', 'walk-profiles.csv'), 'utf8').trim().split(/\r?\n/).slice(1).map(line => {
+  const [id, kind, root, left, right, travel, lift] = line.split(',');
+  return [id, { kind, root: +root, left: +left, right: +right, travel: +travel, lift: +lift }];
+}));
+for (const file of outfitFiles) assert(profiles[file.slice(0, 2)], 'Missing walk profile: ' + file);
+zip.addFile(resources + 'outfits.js', Buffer.from('window.wardrobeOutfits = ' + JSON.stringify(outfitFiles) + ';window.walkProfiles = ' + JSON.stringify(profiles) + ';'));
 zip.writeZip(output);
 const packaged = new Zip(output);
 for (const [name, attributes] of originalEntries) {

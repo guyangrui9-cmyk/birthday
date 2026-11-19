@@ -132,24 +132,13 @@ internal sealed partial class Game : Form
     private void DrawPlayer(Graphics g)
     {
         Bitmap image = worn == null ? player : worn.Image;
-        float swing = (float)Math.Sin(phase) * stride;
-        int split = (int)(image.Height * .85f);
         var state = g.Save();
         g.TranslateTransform(GridWidth * position.X, GridHeight * position.Y);
         if (facing < 0) g.ScaleTransform(-1, 1);
-        float bounce = (float)(1 - Math.Cos(phase * 2)) * stride;
-        g.TranslateTransform(swing * .6f, -bounce);
-        g.DrawImage(image, new RectangleF(-image.Width / 2f, -image.Height, image.Width, split), new RectangleF(0, 0, image.Width, split), GraphicsUnit.Pixel);
-        for (int leg = 0; leg < 2; leg++)
-        {
-            var limb = g.Save();
-            float side = leg == 0 ? -1 : 1;
-            float width = image.Width / 2f;
-            g.TranslateTransform(side * width / 2, -image.Height + split);
-            g.RotateTransform(side * swing * 9);
-            g.DrawImage(image, new RectangleF(-width / 2, -1, width, image.Height - split + 1), new RectangleF(leg * width, split - 1, width, image.Height - split + 1), GraphicsUnit.Pixel);
-            g.Restore(limb);
-        }
+        float bounce = (float)(1 - Math.Cos(phase * 2)) * stride * .35f;
+        g.TranslateTransform(-image.Width / 2f, -image.Height - bounce);
+        if (worn == null) g.DrawImageUnscaled(image, 0, 0);
+        else worn.Motion.Draw(g, phase, stride);
         g.Restore(state);
     }
 
@@ -301,6 +290,7 @@ internal sealed partial class Game : Form
             foreach (Outfit outfit in outfits)
             {
                 outfit.Preview.Dispose();
+                outfit.Motion.Dispose();
                 outfit.Image.Dispose();
             }
             frame.Dispose();

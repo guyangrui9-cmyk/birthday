@@ -14,6 +14,7 @@ internal sealed partial class Game
         public string Name;
         public Bitmap Image;
         public Bitmap Preview;
+        public WalkMotion Motion;
     }
 
     private readonly List<Outfit> outfits = new List<Outfit>();
@@ -32,7 +33,8 @@ internal sealed partial class Game
             Bitmap image = Asset(resource);
             outfits.Add(new Outfit {
                 File = file, Name = Path.GetFileNameWithoutExtension(file).Substring(3), Image = image,
-                Preview = new Bitmap(image, image.Width * 118 / image.Height, 118)
+                Preview = new Bitmap(image, image.Width * 118 / image.Height, 118),
+                Motion = new WalkMotion(image, file)
             });
         }
         worn = outfits.Find(outfit => outfit.File.StartsWith("05-", StringComparison.Ordinal)) ?? outfits.FirstOrDefault();

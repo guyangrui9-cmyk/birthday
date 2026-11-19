@@ -35,24 +35,49 @@ function saveWardrobe() {
 }
 const companion = loadImage('companion.png');
 
+const walkingBodies = new WeakMap();
 function drawWalkingPlayer() {
   if (!player.naturalWidth) return;
-  const split = Math.floor(player.height * .85);
-  const swing = Math.sin(walkingTime) * stride;
-  const half = player.width / 2;
+  const p = window.walkProfiles[worn.file.slice(0, 2)];
+  const w = player.width, h = player.height;
   pixels.save();
   pixels.translate(canvas.width * position.x, canvas.height * position.y);
   if (facing < 0) pixels.scale(-1, 1);
-  pixels.translate(swing * .6, -(1 - Math.cos(walkingTime * 2)) * stride);
-  pixels.drawImage(player, 0, 0, player.width, split, -half, -player.height, player.width, split);
-  for (let leg = 0; leg < 2; leg++) {
-    const side = leg === 0 ? -1 : 1;
-    pixels.save();
-    pixels.translate(side * half / 2, -player.height + split);
-    pixels.rotate(side * swing * 9 * Math.PI / 180);
-    pixels.drawImage(player, leg * half, split - 1, half, player.height - split + 1,
-      -half / 2, -1, half, player.height - split + 1);
-    pixels.restore();
+  pixels.translate(-w / 2, -h - (1 - Math.cos(walkingTime * 2)) * stride * .35);
+  if (stride < .001) {
+    pixels.drawImage(player, 0, 0);
+  } else if (p.kind === 'gown') {
+    pixels.fillStyle = '#3e271c';
+    for (let leg = 0; leg < 2; leg++) {
+      const lift = Math.max(0, Math.sin(walkingTime + leg * Math.PI)) * stride;
+      pixels.fillRect(w / 2 + (leg === 0 ? -10 : 3), 174 - lift, 7, 3);
+    }
+    pixels.drawImage(player, 0, 0);
+  } else {
+    let body = walkingBodies.get(player);
+    if (!body) {
+      body = document.createElement('canvas');
+      body.width = w; body.height = h;
+      const ctx = body.getContext('2d');
+      ctx.drawImage(player, 0, 0);
+      ctx.clearRect(0, p.root, w, h - p.root);
+      walkingBodies.set(player, body);
+    }
+    const middle = (p.left + p.right) / 2;
+    for (let leg = 0; leg < 2; leg++) {
+      const cycle = Math.sin(walkingTime + leg * Math.PI);
+      const left = leg === 0 ? 0 : middle;
+      const width = leg === 0 ? middle : w - middle;
+      for (let y = p.root; y < h; y++) {
+        const t = (y - p.root) / (h - p.root - 1);
+        const ease = t * t * (3 - 2 * t);
+        const bend = Math.sin(t * Math.PI) * Math.max(0, cycle);
+        const dx = (cycle * ease + bend * .35) * p.travel * stride;
+        const dy = -Math.max(0, cycle) * ease * p.lift * stride;
+        pixels.drawImage(player, left, y, width, 1, left + dx, y + dy, width, 1.1);
+      }
+    }
+    pixels.drawImage(body, 0, 0);
   }
   pixels.restore();
 }
@@ -270,8 +295,3 @@ function showWardrobe(managing) {
     grid.append(card);
   }
 }
-
-
-
-
-
