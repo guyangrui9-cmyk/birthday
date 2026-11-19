@@ -19,7 +19,8 @@ internal static class MotionReview
             using (var baseline = new Bitmap(image.Width, image.Height))
             {
                 using (var bg = Graphics.FromImage(baseline)) { bg.InterpolationMode = InterpolationMode.NearestNeighbor; bg.PixelOffsetMode = PixelOffsetMode.Half; bg.DrawImageUnscaled(image, 0, 0); }
-                int changes = 0;
+                int changes = 0, legChanges = 0;
+                var profile = WalkMotion.Profiles[Path.GetFileName(files[i]).Substring(0,2)];
                 for (int pose = 0; pose < 5; pose++)
                 using (var frame = new Bitmap(image.Width, image.Height))
                 using (var fg = Graphics.FromImage(frame))
@@ -36,12 +37,14 @@ internal static class MotionReview
                             if (pose == 0) throw new Exception("Rest changed: " + files[i]);
                             if (y < 100) throw new Exception("Upper body changed");
                             changes++;
+                            if (y > profile.Root + 3 && y < image.Height - 12) legChanges++;
                         }
                     }
                     g.DrawImageUnscaled(frame, i % 3 * 600 + pose * 118 + (118-image.Width)/2, i / 3 * 200 + 15);
                 }
                 g.DrawString(Path.GetFileName(files[i]).Substring(0,2), font, Brushes.Black, i % 3 * 600 + 4, i / 3 * 200 + 2);
                 if (changes == 0) throw new Exception("No animation: " + files[i]);
+                if (profile.Root < 150 && legChanges == 0) throw new Exception("Only shoes moved, calf stayed fixed: " + files[i]);
                 Console.WriteLine(Path.GetFileName(files[i]) + ": " + changes);
             }
             sheet.Save(args[1]);

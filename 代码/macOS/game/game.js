@@ -46,7 +46,7 @@ function drawWalkingPlayer() {
   pixels.save();
   pixels.translate(canvas.width * position.x, canvas.height * position.y);
   if (sideFacing && facing < 0) pixels.scale(-1, 1);
-  pixels.translate(-w / 2 + (sideFacing ? 0 : Math.sin(walkingTime) * stride * .6), -h - (1 - Math.cos(walkingTime * 2)) * stride * .7);
+  pixels.translate(-w / 2 + (sideFacing ? 0 : Math.sin(walkingTime) * stride * .6), -h - (sideFacing ? 0 : (1 - Math.cos(walkingTime * 2)) * stride * .2));
   if (stride < .001) {
     pixels.drawImage(sprite, 0, 0);
   } else if (p.kind === 'gown') {
@@ -55,7 +55,7 @@ function drawWalkingPlayer() {
     for (let leg = 0; leg < 2; leg++) {
       const cycle = Math.sin(walkingTime + leg * Math.PI);
       const lift = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
-      pixels.fillRect(w / 2 + (sideFacing ? cycle * 5 : leg === 0 ? -11 : 3), 175 + (cycle * 2 - lift) * stride, 8, 5 * stride);
+      pixels.fillRect(w / 2 + (sideFacing ? cycle * 5 : leg === 0 ? -11 : 3), 175 + (sideFacing ? 0 : cycle - lift * .3) * stride, 8, 5 * stride);
     }
   } else {
     let body = walkingBodies.get(sprite);
@@ -77,11 +77,12 @@ function drawWalkingPlayer() {
         const ease = t * t * (3 - 2 * t);
         const swing = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
         const bend = Math.sin(t * Math.PI) * swing;
-        const dx = (cycle * ease + bend * .65) * p.travel * stride * (sideFacing ? 3.2 : 1);
-        const dy = (cycle * 2.5 - swing * p.lift) * ease * stride;
+        const dx = Math.round((cycle * ease + bend * .25) * p.travel * stride * (sideFacing ? 3.2 : .7));
+        const vertical = sideFacing ? -swing * .45 : cycle * 1.2 - swing * p.lift * .4;
+        const dy = vertical * ease * stride;
         const nextT = Math.min(1, t + 1 / (h - p.root - 1));
         const nextEase = nextT * nextT * (3 - 2 * nextT);
-        const nextDy = (cycle * 2.5 - swing * p.lift) * nextEase * stride;
+        const nextDy = vertical * nextEase * stride;
         const rowHeight = Math.max(.4, 1 + nextDy - dy + .25);
         pixels.drawImage(sprite, left, y, width, 1, left + dx, y + dy, width, rowHeight);
       }

@@ -21,3 +21,9 @@ Upward input selects the matching back sprite for all 21 outfits; downward input
 Stride travel is increased per garment. Swing-foot lift follows a quarter-cycle offset from forward travel, with continuous knee bending and visible landing extension. Long skirts expose alternating shoe steps; the ball gown draws small shoes at its hem. Body bounce and a small weight shift follow the gait, and cadence is slightly slower. Scanline overlap follows vertical deformation to keep stretched feet connected.
 
 Validation: Windows build and direction/movement self-test; all 21 outfits rendered at five phases in front, side and back views (315 poses); JavaScript and macOS packaging syntax checks. macOS runtime itself was not executed on this Windows machine.
+
+## Consistent proportions and planted side steps
+
+Side and back atlases were redrawn to match the original front-view head/torso/leg proportions, with reduced side-face and hair volume. Atlas slicing follows the main connected silhouette to exclude neighboring fragments. All views remain at the same 177px standing height.
+
+Side gait now keeps feet close to ground level, with alternating forward/back leg swing instead of the previous marching lift. Pixel-rounded displacement reduces shimmering; exposed calves deform from their attachment below the hem. Short-skirt and trouser pose checks now require actual movement above the shoes. Front/back lift and body bounce were reduced. This is an original gait inspired by the user's Stardew Valley reference, using the project's own artwork.

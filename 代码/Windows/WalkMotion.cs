@@ -65,7 +65,7 @@ internal sealed class WalkMotion : IDisposable
                     float cycle = (float)Math.Sin(phase + leg * Math.PI);
                     float lift = Math.Max(0, (float)Math.Cos(phase + leg * Math.PI));
                     float x = image.Width / 2f + (sideView ? cycle * 5 : leg == 0 ? -11 : 3);
-                    g.FillRectangle(shoe, x, 175 + (cycle * 2 - lift) * amount, 8, 5 * amount);
+                    g.FillRectangle(shoe, x, 175 + (sideView ? 0 : cycle - lift * .3f) * amount, 8, 5 * amount);
                 }
             return;
         }
@@ -83,11 +83,14 @@ internal sealed class WalkMotion : IDisposable
                 float ease = t * t * (3 - 2 * t);
                 float swing = Math.Max(0, (float)Math.Cos(phase + leg * Math.PI));
                 float bend = (float)Math.Sin(t * Math.PI) * swing;
-                float dx = (cycle * ease + bend * .65f) * profile.Travel * amount * (sideView ? 3.2f : 1f);
-                float dy = (cycle * 2.5f - swing * profile.Lift) * ease * amount;
+                float dx = (float)Math.Round((cycle * ease + bend * .25f) * profile.Travel * amount * (sideView ? 3.2f : .7f));
+                // Side walking is a planted forward/back leg swing, not marching.
+                // Exposed calves deform from the hem, not just the shoe region.
+                float vertical = sideView ? -swing * .45f : cycle * 1.2f - swing * profile.Lift * .4f;
+                float dy = vertical * ease * amount;
                 float nextT = Math.Min(1f, t + 1f / (image.Height - profile.Root - 1));
                 float nextEase = nextT * nextT * (3 - 2 * nextT);
-                float nextDy = (cycle * 2.5f - swing * profile.Lift) * nextEase * amount;
+                float nextDy = vertical * nextEase * amount;
                 float rowHeight = Math.Max(.4f, 1 + nextDy - dy + .25f);
                 g.DrawImage(image, new RectangleF(left + dx, y + dy, width, rowHeight),
                     new RectangleF(left, y, width, 1), GraphicsUnit.Pixel);

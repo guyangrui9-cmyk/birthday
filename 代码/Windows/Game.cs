@@ -137,7 +137,7 @@ internal sealed partial class Game : Form
         var state = g.Save();
         g.TranslateTransform(GridWidth * position.X, GridHeight * position.Y);
         if (sideFacing && facing < 0) g.ScaleTransform(-1, 1);
-        float bounce = (float)(1 - Math.Cos(phase * 2)) * stride * .7f;
+        float bounce = sideFacing ? 0 : (float)(1 - Math.Cos(phase * 2)) * stride * .2f;
         g.TranslateTransform(-image.Width / 2f + (sideFacing ? 0 : (float)Math.Sin(phase) * stride * .6f), -image.Height - bounce);
         if (worn == null) g.DrawImageUnscaled(image, 0, 0);
         else (backFacing ? worn.BackMotion : sideFacing ? worn.SideMotion : worn.Motion).Draw(g, phase, stride);
