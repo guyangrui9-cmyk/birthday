@@ -1,0 +1,7 @@
+{
+  "name": "birthday-room",
+  "productName": "我们的小屋",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.cjs"
+}

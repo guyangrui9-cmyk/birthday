@@ -1,0 +1,46 @@
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;background:#241715;color:#ffedcf;font-family:system-ui,sans-serif}
+main{width:min(100%,max(280px,calc((100svh - 150px) * 16 / 9)))}
+header,footer{display:flex;justify-content:space-between;align-items:center;gap:12px}
+header{padding:0 0 12px} h1{margin:0;font-size:clamp(22px,4vw,34px);letter-spacing:.09em}
+header span,footer{color:#e4bf9a;font-size:14px}
+.room{position:relative;aspect-ratio:480/270;margin-inline:auto;overflow:hidden;background:#713f2f;outline:2px solid #bc8255;box-shadow:0 8px 0 #110c0a}
+.background{width:100%;height:100%;display:block;image-rendering:auto}
+.hotspot{position:absolute;z-index:1;background:none;border:0;border-radius:10px;cursor:pointer}
+.hotspot:hover,.hotspot:focus-visible{outline:2px dashed #ffdf9b;background:#ffdc7622}
+[data-object=map]{left:36%;top:6.5%;width:32%;height:32%}
+[data-object=gift]{left:76.5%;top:60%;width:8.6%;height:15.5%}
+[data-object=dog]{left:39%;top:75%;width:11%;height:14%}
+#prompt{position:absolute;z-index:2;bottom:4%;left:50%;translate:-50%;background:#2b1916f5;border:1px solid #e4aa6d;padding:6px 12px;pointer-events:none;white-space:nowrap;font-size:clamp(11px,2vw,16px)}
+#prompt:empty{display:none}
+footer{padding-top:20px;justify-content:center;flex-wrap:wrap}
+kbd{background:#412b24;border:1px solid #a57656;border-radius:4px;padding:2px 6px;color:#fff4dc}
+.touch{display:none;justify-content:center;gap:8px;margin-top:14px}
+button{font:inherit}
+.touch button,dialog button{border:1px solid #a66c43;background:#f7d6a6;color:#40241d;padding:8px 14px;border-radius:4px;cursor:pointer;touch-action:none}
+dialog{width:min(440px,calc(100% - 32px));color:#442720;background:#fff0d3;border:4px double #a96a45;box-shadow:0 8px 0 #311710;padding:26px}
+dialog::backdrop{background:#201212ac}
+dialog form{float:right}dialog form button{padding:0 9px;font-size:22px}dialog h2{margin:0 0 16px}dialog p{line-height:1.65}
+#dialog-content img{width:100%;aspect-ratio:1.8;object-fit:cover;image-rendering:auto;border:3px solid #b8794f}
+.gift-icon{display:block;font-size:52px;margin:8px 0;animation:pop .45s both}
+@keyframes pop{from{transform:scale(.35) rotate(-15deg);opacity:0}to{transform:scale(1);opacity:1}}
+@media(pointer:coarse),(max-width:700px){body{padding:14px}.touch{display:flex}footer{font-size:12px}}
+.travel-map{position:relative}
+#dialog-content .travel-map img{display:block;height:auto;aspect-ratio:auto}
+.travel-map button{position:absolute;translate:-50% -50%;padding:0;width:28px;height:28px;background:#9b4536;color:#fff0d3;border:2px solid #ffe0a9;font-weight:bold}
+
+
+[data-object=wardrobe]{left:69.5%;top:9.5%;width:12%;height:35%}
+dialog:has(.wardrobe-grid){width:min(680px,calc(100% - 24px))}
+.wardrobe-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.wardrobe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;max-height:52vh;overflow:auto}
+.outfit-card{position:relative;display:grid;justify-items:center;gap:4px;padding:8px;border:1px solid #bd8d62;background:#ffe3b4;border-radius:4px;cursor:pointer;color:#442720;font-size:13px}
+.outfit-card[aria-pressed=true]{outline:2px solid #8b5237;outline-offset:-2px}
+#dialog-content .outfit-card img{width:auto;height:94px;aspect-ratio:auto;object-fit:contain;border:0;image-rendering:auto}
+.outfit-card input{position:absolute;top:4px;left:4px}
+
+
+
+@media(pointer:coarse),(max-width:700px){main{width:min(100%,max(280px,calc((100svh - 185px) * 16 / 9)))}}
+
+

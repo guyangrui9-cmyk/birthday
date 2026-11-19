@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我们的小屋</title>
+<link rel="stylesheet" href="style.css">
+<script src="outfits.js" defer></script>
+<script src="game.js" defer></script>
+</head>
+<body>
+<main>
+  <header><h1>我们的小屋</h1><span>生日特别篇</span></header>
+  <div class="room" aria-label="像素客厅">
+    <canvas class="background" width="1440" height="810" aria-label="像素客厅和角色"></canvas>
+    <button class="hotspot" data-object="wardrobe" aria-label="衣橱"></button>
+    <button class="hotspot" data-object="map" aria-label="旅行贴板"></button>
+    <button class="hotspot" data-object="gift" aria-label="生日礼物"></button>
+    <button class="hotspot" data-object="dog" aria-label="西施狗"></button>
+    <div id="prompt" role="status"></div>
+  </div>
+  <footer><span><kbd>WASD</kbd> / <kbd>方向键</kbd> 移动</span><span><kbd>E</kbd> 互动，也可以点击物品</span></footer>
+  <div class="touch" aria-label="触屏操作">
+    <button data-key="ArrowUp" aria-label="向上">↑</button>
+    <button data-key="ArrowLeft" aria-label="向左">←</button>
+    <button data-key="ArrowDown" aria-label="向下">↓</button>
+    <button data-key="ArrowRight" aria-label="向右">→</button>
+    <button id="interact">互动</button>
+  </div>
+</main>
+<dialog aria-labelledby="dialog-title">
+  <form method="dialog"><button aria-label="关闭">×</button></form>
+  <h2 id="dialog-title"></h2>
+  <div id="dialog-content"></div>
+</dialog>
+</body>
+</html>
+
+
+
+
+

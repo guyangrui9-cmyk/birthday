@@ -1,0 +1,17 @@
+node_modules/
+.cache/
+dist/
+build/
+bin/
+obj/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.log
+/下载包/
+/*.exe
+.DS_Store
+Thumbs.db
