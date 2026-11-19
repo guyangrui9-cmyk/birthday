@@ -35,7 +35,7 @@ for (const file of ['index.html', 'style.css', 'game.js']) {
   zip.addFile(resources + file, fs.readFileSync(path.join(game, file)));
 }
 const images = {
-  'room.png': ['房间', 'room-game.png'],
+  'room.png': ['房间', 'room-modern-game.png'],
   'map.png': ['房间', 'map-game.png'],
   'player.png': ['人物', 'player-game.png'],
   'companion.png': ['人物', 'companion-game.png'],

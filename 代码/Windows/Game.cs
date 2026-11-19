@@ -23,15 +23,15 @@ internal sealed partial class Game : Form
     private readonly Font normal = new Font("Microsoft YaHei UI", 11);
     private static readonly Color Cream = Color.FromArgb(255, 237, 207);
     private static readonly RectangleF[] obstacles = {
-        new RectangleF(.065f, .585f, .148f, .357f), new RectangleF(.715f, .59f, .213f, .34f),
-        new RectangleF(.127f, .35f, .216f, .106f), new RectangleF(.88f, .38f, .11f, .17f),
-        new RectangleF(.695f, .34f, .122f, .104f), new RectangleF(.392f, .792f, .108f, .094f), new RectangleF(.527f, .608f, .063f, .049f)
+        new RectangleF(.045f, .535f, .185f, .405f), new RectangleF(.70f, .68f, .21f, .23f),
+        new RectangleF(.16f, .48f, .16f, .07f), new RectangleF(.90f, .50f, .085f, .04f),
+        new RectangleF(.81f, .54f, .135f, .155f), new RectangleF(.375f, .80f, .10f, .10f), new RectangleF(.527f, .608f, .063f, .049f)
     };
-    private static readonly PointF[] targets = { new PointF(.53f,.45f), new PointF(.715f,.71f), new PointF(.45f,.80f), new PointF(.75f,.475f) };
+    private static readonly PointF[] targets = { new PointF(.53f,.52f), new PointF(.675f,.74f), new PointF(.43f,.765f), new PointF(.79f,.52f) };
     private static readonly RectangleF[] hotspots = {
-        new RectangleF(.36f,.065f,.32f,.32f), new RectangleF(.765f,.60f,.086f,.155f), new RectangleF(.39f,.75f,.11f,.14f), new RectangleF(.695f,.095f,.12f,.35f)
+        new RectangleF(.31f,.145f,.25f,.21f), new RectangleF(.75f,.635f,.08f,.155f), new RectangleF(.375f,.79f,.10f,.12f), new RectangleF(.72f,.10f,.14f,.38f)
     };
-    private static readonly string[] labels = { "旅行贴板", "生日礼物", "摸摸西施狗", "衣橱" };
+    private static readonly string[] labels = { "旅行回忆电视", "生日礼物", "摸摸西施狗", "衣橱" };
     private PointF position = new PointF(.43f, .71f);
     private int facing = 1;
     private bool sideFacing;
@@ -155,7 +155,7 @@ internal sealed partial class Game : Form
     }
     private static bool Walkable(float x, float y)
     {
-        if (x < .075f || x > .91f || y < .405f || y > .96f) return false;
+        if (x < .075f || x > .91f || y < .515f || y > .96f) return false;
         RectangleF feet = new RectangleF(x - .014f, y - .022f, .028f, .044f);
         foreach (RectangleF obstacle in obstacles)
             if (feet.IntersectsWith(obstacle)) return false;
@@ -282,7 +282,10 @@ internal sealed partial class Game : Form
         keys.Add(Keys.Right);
         for (int i = 0; i < 120; i++) UpdatePosition(.016f);
         keys.Clear();
-        bool movement = position.X > .68f && position.X <= .702f && Nearest() == 1;
+        bool movement = position.X > .66f && position.X <= .687f && Nearest() == 1;
+        foreach (PointF target in targets) if (!Walkable(target.X, target.Y)) return false;
+        foreach (RectangleF obstacle in obstacles)
+            if (Walkable(obstacle.X + obstacle.Width / 2, obstacle.Y + obstacle.Height / 2)) return false;
         if (!sideFacing || facing != 1) return false;
         keys.Add(Keys.Left); UpdatePosition(.016f); keys.Clear();
         if (!sideFacing || facing != -1) return false;

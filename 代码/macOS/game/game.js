@@ -117,15 +117,15 @@ const directions = {
   w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
 };
 const objects = {
-  wardrobe: { label: '衣橱', x: .75, y: .475 },
-  map: { label: '旅行贴板', x: .53, y: .45 },
-  gift: { label: '生日礼物', x: .715, y: .71 },
-  dog: { label: '摸摸西施狗', x: .45, y: .80 },
+  wardrobe: { label: '衣橱', x: .79, y: .52 },
+  map: { label: '旅行回忆电视', x: .53, y: .52 },
+  gift: { label: '生日礼物', x: .675, y: .74 },
+  dog: { label: '摸摸西施狗', x: .43, y: .765 },
 };
 const obstacles = [
-  [.065, .585, .213, .942], [.715, .59, .928, .93],
-  [.127, .35, .343, .456], [.88, .38, .99, .55],
-  [.695, .34, .817, .444], [.392, .792, .50, .886], [.527, .608, .59, .657],
+  [.045, .535, .23, .94], [.70, .68, .91, .91],
+  [.16, .48, .32, .55], [.90, .50, .985, .54],
+  [.81, .54, .945, .695], [.375, .80, .475, .90], [.527, .608, .59, .657],
 ];
 const ratio = canvas.width / canvas.height;
 const distance = (a, b) => Math.hypot(a.x - b.x, (a.y - b.y) / ratio);
@@ -133,7 +133,7 @@ const distance = (a, b) => Math.hypot(a.x - b.x, (a.y - b.y) / ratio);
 function isWalkable(x, y) {
   const marginX = .014;
   const marginY = .022;
-  return x >= .075 && x <= .91 && y >= .405 && y <= .96 &&
+  return x >= .075 && x <= .91 && y >= .515 && y <= .96 &&
     !obstacles.some(([left, top, right, bottom]) =>
       x + marginX > left && x - marginX < right &&
       y + marginY > top && y - marginY < bottom);

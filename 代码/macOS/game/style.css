@@ -8,9 +8,9 @@ header span,footer{color:#e4bf9a;font-size:14px}
 .background{width:100%;height:100%;display:block;image-rendering:auto}
 .hotspot{position:absolute;z-index:1;background:none;border:0;border-radius:10px;cursor:pointer}
 .hotspot:hover,.hotspot:focus-visible{outline:2px dashed #ffdf9b;background:#ffdc7622}
-[data-object=map]{left:36%;top:6.5%;width:32%;height:32%}
-[data-object=gift]{left:76.5%;top:60%;width:8.6%;height:15.5%}
-[data-object=dog]{left:39%;top:75%;width:11%;height:14%}
+[data-object=map]{left:31%;top:14.5%;width:25%;height:21%}
+[data-object=gift]{left:75%;top:63.5%;width:8%;height:15.5%}
+[data-object=dog]{left:37.5%;top:79%;width:10%;height:12%}
 #prompt{position:absolute;z-index:2;bottom:4%;left:50%;translate:-50%;background:#2b1916f5;border:1px solid #e4aa6d;padding:6px 12px;pointer-events:none;white-space:nowrap;font-size:clamp(11px,2vw,16px)}
 #prompt:empty{display:none}
 footer{padding-top:20px;justify-content:center;flex-wrap:wrap}
@@ -30,7 +30,7 @@ dialog form{float:right}dialog form button{padding:0 9px;font-size:22px}dialog h
 .travel-map button{position:absolute;translate:-50% -50%;padding:0;width:28px;height:28px;background:#9b4536;color:#fff0d3;border:2px solid #ffe0a9;font-weight:bold}
 
 
-[data-object=wardrobe]{left:69.5%;top:9.5%;width:12%;height:35%}
+[data-object=wardrobe]{left:72%;top:10%;width:14%;height:38%}
 dialog:has(.wardrobe-grid){width:min(680px,calc(100% - 24px))}
 .wardrobe-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .wardrobe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;max-height:52vh;overflow:auto}
