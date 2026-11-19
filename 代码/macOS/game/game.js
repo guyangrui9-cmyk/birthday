@@ -26,6 +26,7 @@ const hidden = new Set(Array.isArray(saved.hidden) ? saved.hidden : []);
 let worn = outfits.find(({ file }) => file === saved.worn) ?? defaultOutfit;
 let player = loadImage('outfits/' + worn.file);
 let sidePlayer = loadImage('outfits-side/' + worn.file);
+let backPlayer = loadImage('outfits-back/' + worn.file);
 
 function saveWardrobe() {
   try {
@@ -38,23 +39,24 @@ const companion = loadImage('companion.png');
 
 const walkingBodies = new WeakMap();
 function drawWalkingPlayer() {
-  const sprite = sideFacing ? sidePlayer : player;
+  const sprite = backFacing ? backPlayer : sideFacing ? sidePlayer : player;
   if (!sprite.naturalWidth) return;
   const p = window.walkProfiles[worn.file.slice(0, 2)];
   const w = sprite.width, h = sprite.height;
   pixels.save();
   pixels.translate(canvas.width * position.x, canvas.height * position.y);
   if (sideFacing && facing < 0) pixels.scale(-1, 1);
-  pixels.translate(-w / 2, -h - (1 - Math.cos(walkingTime * 2)) * stride * .35);
+  pixels.translate(-w / 2 + (sideFacing ? 0 : Math.sin(walkingTime) * stride * .6), -h - (1 - Math.cos(walkingTime * 2)) * stride * .7);
   if (stride < .001) {
     pixels.drawImage(sprite, 0, 0);
   } else if (p.kind === 'gown') {
+    pixels.drawImage(sprite, 0, 0);
     pixels.fillStyle = '#3e271c';
     for (let leg = 0; leg < 2; leg++) {
-      const lift = Math.max(0, Math.sin(walkingTime + leg * Math.PI)) * stride;
-      pixels.fillRect(w / 2 + (leg === 0 ? -10 : 3), 174 - lift, 7, 3);
+      const cycle = Math.sin(walkingTime + leg * Math.PI);
+      const lift = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
+      pixels.fillRect(w / 2 + (sideFacing ? cycle * 5 : leg === 0 ? -11 : 3), 175 + (cycle * 2 - lift) * stride, 8, 5 * stride);
     }
-    pixels.drawImage(sprite, 0, 0);
   } else {
     let body = walkingBodies.get(sprite);
     if (!body) {
@@ -73,10 +75,15 @@ function drawWalkingPlayer() {
       for (let y = p.root; y < h; y++) {
         const t = (y - p.root) / (h - p.root - 1);
         const ease = t * t * (3 - 2 * t);
-        const bend = Math.sin(t * Math.PI) * Math.max(0, cycle);
-        const dx = (cycle * ease + bend * .35) * p.travel * stride * (sideFacing ? 2.4 : 1);
-        const dy = -Math.max(0, cycle) * ease * p.lift * stride;
-        pixels.drawImage(sprite, left, y, width, 1, left + dx, y + dy, width, 1.1);
+        const swing = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
+        const bend = Math.sin(t * Math.PI) * swing;
+        const dx = (cycle * ease + bend * .65) * p.travel * stride * (sideFacing ? 3.2 : 1);
+        const dy = (cycle * 2.5 - swing * p.lift) * ease * stride;
+        const nextT = Math.min(1, t + 1 / (h - p.root - 1));
+        const nextEase = nextT * nextT * (3 - 2 * nextT);
+        const nextDy = (cycle * 2.5 - swing * p.lift) * nextEase * stride;
+        const rowHeight = Math.max(.4, 1 + nextDy - dy + .25);
+        pixels.drawImage(sprite, left, y, width, 1, left + dx, y + dy, width, rowHeight);
       }
     }
     pixels.drawImage(body, 0, 0);
@@ -194,6 +201,7 @@ let walkingTime = 0;
 let stride = 0;
 let facing = 1;
 let sideFacing = false;
+let backFacing = false;
 function tick(now) {
   const step = Math.min((now - previous) / 1000, .04) * .19;
   previous = now;
@@ -211,12 +219,12 @@ function tick(now) {
   if (isWalkable(x, position.y)) position.x = x;
   if (isWalkable(position.x, y)) position.y = y;
   const moving = oldX !== position.x || oldY !== position.y;
-  if (dx) { facing = Math.sign(dx); sideFacing = true; }
-  else if (dy) sideFacing = false;
+  if (dx) { facing = Math.sign(dx); sideFacing = true; backFacing = false; }
+  else if (dy) { sideFacing = false; backFacing = dy < 0; }
   const seconds = step / .19;
   stride += ((moving ? 1 : 0) - stride) * Math.min(1, seconds * 12);
   if (stride < .001) { stride = 0; walkingTime = 0; }
-  else walkingTime += seconds * 9;
+  else walkingTime += seconds * 8;
   if (background.naturalWidth) {
     pixels.drawImage(background, 0, 0);
     const drawPlayer = drawWalkingPlayer;
@@ -293,6 +301,7 @@ function showWardrobe(managing) {
         worn = outfit;
         player = preview;
         sidePlayer = loadImage('outfits-side/' + worn.file);
+        backPlayer = loadImage('outfits-back/' + worn.file);
         saveWardrobe();
         showWardrobe(false);
       });

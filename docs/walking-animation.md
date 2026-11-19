@@ -13,3 +13,11 @@ Validation: compile Windows, run its movement self-test, and compile tests/Motio
 All 21 outfits now have a separately drawn right-facing profile in 图像素材/人物/侧面装扮, sourced from 侧面原图.png. The asset preparation tool slices the 7-by-3 atlas and normalizes each profile to a 177px height. Leftward walking mirrors the side sprite; upward/downward input restores the front view. Idle retains the last view, and diagonal input with a horizontal component uses the side view. Outfit changes select the matching side sprite.
 
 Side gait layers the farther leg behind the near leg and uses continuous small forward/back steps. Long garments keep their clothing-specific covered leg regions. Windows resources and macOS packaging include all side assets. The movement self-test checks left/right orientation, idle retention, vertical reset and asset availability; MotionReview accepts a third argument to check side rendering.
+
+## Back view and clearer steps
+
+Upward input selects the matching back sprite for all 21 outfits; downward input selects the front sprite, with horizontal and diagonal input retaining side-view priority. Back assets are packaged on both platforms and checked by the direction self-test.
+
+Stride travel is increased per garment. Swing-foot lift follows a quarter-cycle offset from forward travel, with continuous knee bending and visible landing extension. Long skirts expose alternating shoe steps; the ball gown draws small shoes at its hem. Body bounce and a small weight shift follow the gait, and cadence is slightly slower. Scanline overlap follows vertical deformation to keep stretched feet connected.
+
+Validation: Windows build and direction/movement self-test; all 21 outfits rendered at five phases in front, side and back views (315 poses); JavaScript and macOS packaging syntax checks. macOS runtime itself was not executed on this Windows machine.

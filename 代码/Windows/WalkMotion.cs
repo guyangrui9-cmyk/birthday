@@ -56,15 +56,17 @@ internal sealed class WalkMotion : IDisposable
         if (amount < .001f) { g.DrawImageUnscaled(image, 0, 0); return; }
         if (profile.Kind == "gown")
         {
+            g.DrawImageUnscaled(image, 0, 0);
             // Feet are hidden by the ball gown: show only tiny shoe tips behind
             // its intact hem rather than cutting the dress into moving halves.
             using (var shoe = new SolidBrush(Color.FromArgb(62, 39, 28)))
                 for (int leg = 0; leg < 2; leg++)
                 {
-                    float lift = Math.Max(0, (float)Math.Sin(phase + leg * Math.PI)) * amount;
-                    g.FillRectangle(shoe, image.Width / 2f + (leg == 0 ? -10 : 3), 174 - lift, 7, 3);
+                    float cycle = (float)Math.Sin(phase + leg * Math.PI);
+                    float lift = Math.Max(0, (float)Math.Cos(phase + leg * Math.PI));
+                    float x = image.Width / 2f + (sideView ? cycle * 5 : leg == 0 ? -11 : 3);
+                    g.FillRectangle(shoe, x, 175 + (cycle * 2 - lift) * amount, 8, 5 * amount);
                 }
-            g.DrawImageUnscaled(image, 0, 0);
             return;
         }
         float middle = (profile.Left + profile.Right) / 2f;
@@ -79,10 +81,15 @@ internal sealed class WalkMotion : IDisposable
                 // Continuous deformation has zero displacement and zero slope
                 // at the hip/hem. Feet move mainly in depth, not sideways.
                 float ease = t * t * (3 - 2 * t);
-                float bend = (float)Math.Sin(t * Math.PI) * Math.Max(0, cycle);
-                float dx = (cycle * ease + bend * .35f) * profile.Travel * amount * (sideView ? 2.4f : 1f);
-                float dy = -Math.Max(0, cycle) * ease * profile.Lift * amount;
-                g.DrawImage(image, new RectangleF(left + dx, y + dy, width, 1.1f),
+                float swing = Math.Max(0, (float)Math.Cos(phase + leg * Math.PI));
+                float bend = (float)Math.Sin(t * Math.PI) * swing;
+                float dx = (cycle * ease + bend * .65f) * profile.Travel * amount * (sideView ? 3.2f : 1f);
+                float dy = (cycle * 2.5f - swing * profile.Lift) * ease * amount;
+                float nextT = Math.Min(1f, t + 1f / (image.Height - profile.Root - 1));
+                float nextEase = nextT * nextT * (3 - 2 * nextT);
+                float nextDy = (cycle * 2.5f - swing * profile.Lift) * nextEase * amount;
+                float rowHeight = Math.Max(.4f, 1 + nextDy - dy + .25f);
+                g.DrawImage(image, new RectangleF(left + dx, y + dy, width, rowHeight),
                     new RectangleF(left, y, width, 1), GraphicsUnit.Pixel);
             }
         }

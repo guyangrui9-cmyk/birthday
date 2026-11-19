@@ -35,6 +35,7 @@ internal sealed partial class Game : Form
     private PointF position = new PointF(.43f, .71f);
     private int facing = 1;
     private bool sideFacing;
+    private bool backFacing;
     private float phase;
     private float stride;
     private double lastTick;
@@ -132,14 +133,14 @@ internal sealed partial class Game : Form
 
     private void DrawPlayer(Graphics g)
     {
-        Bitmap image = worn == null ? player : sideFacing ? worn.SideImage : worn.Image;
+        Bitmap image = worn == null ? player : backFacing ? worn.BackImage : sideFacing ? worn.SideImage : worn.Image;
         var state = g.Save();
         g.TranslateTransform(GridWidth * position.X, GridHeight * position.Y);
         if (sideFacing && facing < 0) g.ScaleTransform(-1, 1);
-        float bounce = (float)(1 - Math.Cos(phase * 2)) * stride * .35f;
-        g.TranslateTransform(-image.Width / 2f, -image.Height - bounce);
+        float bounce = (float)(1 - Math.Cos(phase * 2)) * stride * .7f;
+        g.TranslateTransform(-image.Width / 2f + (sideFacing ? 0 : (float)Math.Sin(phase) * stride * .6f), -image.Height - bounce);
         if (worn == null) g.DrawImageUnscaled(image, 0, 0);
-        else (sideFacing ? worn.SideMotion : worn.Motion).Draw(g, phase, stride);
+        else (backFacing ? worn.BackMotion : sideFacing ? worn.SideMotion : worn.Motion).Draw(g, phase, stride);
         g.Restore(state);
     }
 
@@ -165,8 +166,8 @@ internal sealed partial class Game : Form
     {
         int dx = Axis(Keys.Right, Keys.D) - Axis(Keys.Left, Keys.A);
         int dy = Axis(Keys.Down, Keys.S) - Axis(Keys.Up, Keys.W);
-        if (dx != 0) { facing = Math.Sign(dx); sideFacing = true; }
-        else if (dy != 0) sideFacing = false;
+        if (dx != 0) { facing = Math.Sign(dx); sideFacing = true; backFacing = false; }
+        else if (dy != 0) { sideFacing = false; backFacing = dy < 0; }
         float step = seconds * .19f / (float)Math.Max(1, Math.Sqrt(dx * dx + dy * dy));
         PointF before = position;
         float x = position.X + dx * step;
@@ -176,7 +177,7 @@ internal sealed partial class Game : Form
         bool moving = before != position;
         stride += ((moving ? 1f : 0f) - stride) * Math.Min(1f, seconds * 12f);
         if (stride < .001f) { stride = 0; phase = 0; }
-        else phase += seconds * 9f;
+        else phase += seconds * 8f;
     }
 
     private int Axis(Keys primary, Keys alternate)
@@ -288,7 +289,9 @@ internal sealed partial class Game : Form
         UpdatePosition(.016f);
         if (!sideFacing) return false; // Idle keeps the last horizontal view.
         keys.Add(Keys.Up); UpdatePosition(.016f); keys.Clear();
-        return movement && !sideFacing && outfits.TrueForAll(outfit => outfit.SideImage.Height == 177);
+        if (!backFacing || sideFacing) return false;
+        keys.Add(Keys.Down); UpdatePosition(.016f); keys.Clear();
+        return movement && !sideFacing && !backFacing && outfits.TrueForAll(outfit => outfit.SideImage.Height == 177 && outfit.BackImage.Height == 177);
     }
 
     protected override void Dispose(bool disposing)
@@ -302,6 +305,8 @@ internal sealed partial class Game : Form
                 outfit.Motion.Dispose();
                 outfit.SideMotion.Dispose();
                 outfit.SideImage.Dispose();
+                outfit.BackMotion.Dispose();
+                outfit.BackImage.Dispose();
                 outfit.Image.Dispose();
             }
             frame.Dispose();
