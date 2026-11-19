@@ -27,3 +27,11 @@ Validation: Windows build and direction/movement self-test; all 21 outfits rende
 Side and back atlases were redrawn to match the original front-view head/torso/leg proportions, with reduced side-face and hair volume. Atlas slicing follows the main connected silhouette to exclude neighboring fragments. All views remain at the same 177px standing height.
 
 Side gait now keeps feet close to ground level, with alternating forward/back leg swing instead of the previous marching lift. Pixel-rounded displacement reduces shimmering; exposed calves deform from their attachment below the hem. Short-skirt and trouser pose checks now require actual movement above the shoes. Front/back lift and body bounce were reduced. This is an original gait inspired by the user's Stardew Valley reference, using the project's own artwork.
+
+## Rear garment construction and seam repair
+
+Rear artwork has been corrected across the 21-outfit atlas: front chest bows, front belt buckles and large front scarf tails are removed from the rear; the ball-gown hair ribbon stays at the side of the hair, sunglasses show their rear/temple structure, rear cap straps are retained and jackets use closed back panels. The existing scale and outfit identities are retained.
+
+The garment crack was reproduced with a solid-cloth regression fixture: opposing horizontal shifts opened transparent pixels in previously continuous material. Front/back steps now use depth changes with no opposing lateral split; integer center division and a two-pixel shared source region keep the center attachment connected. Side-view swing remains unchanged.
+
+Validation checks all 21 outfits across front/side/back views at rest plus 16 walking phases (1,071 rendered poses). Checks cover original idle artwork, unchanged upper body, actual calf movement, new transparent garment seams and widened inner-leg gaps. The solid-cloth fixture failed before the repair and passes after it. Windows build and room/direction/movement self-test pass; macOS source syntax checked, runtime not executed here.

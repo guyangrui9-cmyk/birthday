@@ -67,17 +67,17 @@ function drawWalkingPlayer() {
       ctx.clearRect(0, p.root, w, h - p.root);
       walkingBodies.set(sprite, body);
     }
-    const middle = (p.left + p.right) / 2;
+    const middle = Math.floor(w / 2);
     for (let leg = 0; leg < 2; leg++) {
       const cycle = Math.sin(walkingTime + leg * Math.PI);
-      const left = sideFacing ? 0 : leg === 0 ? 0 : middle;
-      const width = sideFacing ? w : leg === 0 ? middle : w - middle;
+      const left = sideFacing ? 0 : leg === 0 ? 0 : middle - 1;
+      const width = sideFacing ? w : leg === 0 ? middle + 1 : w - middle + 1;
       for (let y = p.root; y < h; y++) {
         const t = (y - p.root) / (h - p.root - 1);
         const ease = t * t * (3 - 2 * t);
         const swing = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
         const bend = Math.sin(t * Math.PI) * swing;
-        const dx = Math.round((cycle * ease + bend * .25) * p.travel * stride * (sideFacing ? 3.2 : .7));
+        const dx = sideFacing ? Math.round((cycle * ease + bend * .25) * p.travel * stride * 3.2) : 0;
         const vertical = sideFacing ? -swing * .45 : cycle * 1.2 - swing * p.lift * .4;
         const dy = vertical * ease * stride;
         const nextT = Math.min(1, t + 1 / (h - p.root - 1));
