@@ -16,6 +16,7 @@ internal sealed class WalkMotion : IDisposable
     internal static readonly Dictionary<string, Profile> Profiles = ReadProfiles();
     private readonly Bitmap image, body;
     private readonly Profile profile;
+    private readonly bool sideView;
 
     private static Dictionary<string, Profile> ReadProfiles()
     {
@@ -35,9 +36,12 @@ internal sealed class WalkMotion : IDisposable
         return result;
     }
 
-    internal WalkMotion(Bitmap source, string file)
+    internal WalkMotion(Bitmap source, string file) : this(source, file, false) { }
+
+    internal WalkMotion(Bitmap source, string file, bool side)
     {
         image = source;
+        sideView = side;
         profile = Profiles[file.Substring(0, 2)];
         body = source.Clone(new Rectangle(0, 0, source.Width, source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         // Preserve skirt sides; remove only the authored leg region.
@@ -67,8 +71,8 @@ internal sealed class WalkMotion : IDisposable
         for (int leg = 0; leg < 2; leg++)
         {
             float cycle = (float)Math.Sin(phase + leg * Math.PI);
-            float left = leg == 0 ? 0 : middle;
-            float width = leg == 0 ? middle : image.Width - middle;
+            float left = sideView ? 0 : leg == 0 ? 0 : middle;
+            float width = sideView ? image.Width : leg == 0 ? middle : image.Width - middle;
             for (int y = profile.Root; y < image.Height; y++)
             {
                 float t = (y - profile.Root) / (float)(image.Height - profile.Root - 1);
@@ -76,7 +80,7 @@ internal sealed class WalkMotion : IDisposable
                 // at the hip/hem. Feet move mainly in depth, not sideways.
                 float ease = t * t * (3 - 2 * t);
                 float bend = (float)Math.Sin(t * Math.PI) * Math.Max(0, cycle);
-                float dx = (cycle * ease + bend * .35f) * profile.Travel * amount;
+                float dx = (cycle * ease + bend * .35f) * profile.Travel * amount * (sideView ? 2.4f : 1f);
                 float dy = -Math.Max(0, cycle) * ease * profile.Lift * amount;
                 g.DrawImage(image, new RectangleF(left + dx, y + dy, width, 1.1f),
                     new RectangleF(left, y, width, 1), GraphicsUnit.Pixel);

@@ -25,6 +25,7 @@ const saved = readWardrobe();
 const hidden = new Set(Array.isArray(saved.hidden) ? saved.hidden : []);
 let worn = outfits.find(({ file }) => file === saved.worn) ?? defaultOutfit;
 let player = loadImage('outfits/' + worn.file);
+let sidePlayer = loadImage('outfits-side/' + worn.file);
 
 function saveWardrobe() {
   try {
@@ -37,44 +38,45 @@ const companion = loadImage('companion.png');
 
 const walkingBodies = new WeakMap();
 function drawWalkingPlayer() {
-  if (!player.naturalWidth) return;
+  const sprite = sideFacing ? sidePlayer : player;
+  if (!sprite.naturalWidth) return;
   const p = window.walkProfiles[worn.file.slice(0, 2)];
-  const w = player.width, h = player.height;
+  const w = sprite.width, h = sprite.height;
   pixels.save();
   pixels.translate(canvas.width * position.x, canvas.height * position.y);
-  if (facing < 0) pixels.scale(-1, 1);
+  if (sideFacing && facing < 0) pixels.scale(-1, 1);
   pixels.translate(-w / 2, -h - (1 - Math.cos(walkingTime * 2)) * stride * .35);
   if (stride < .001) {
-    pixels.drawImage(player, 0, 0);
+    pixels.drawImage(sprite, 0, 0);
   } else if (p.kind === 'gown') {
     pixels.fillStyle = '#3e271c';
     for (let leg = 0; leg < 2; leg++) {
       const lift = Math.max(0, Math.sin(walkingTime + leg * Math.PI)) * stride;
       pixels.fillRect(w / 2 + (leg === 0 ? -10 : 3), 174 - lift, 7, 3);
     }
-    pixels.drawImage(player, 0, 0);
+    pixels.drawImage(sprite, 0, 0);
   } else {
-    let body = walkingBodies.get(player);
+    let body = walkingBodies.get(sprite);
     if (!body) {
       body = document.createElement('canvas');
       body.width = w; body.height = h;
       const ctx = body.getContext('2d');
-      ctx.drawImage(player, 0, 0);
+      ctx.drawImage(sprite, 0, 0);
       ctx.clearRect(0, p.root, w, h - p.root);
-      walkingBodies.set(player, body);
+      walkingBodies.set(sprite, body);
     }
     const middle = (p.left + p.right) / 2;
     for (let leg = 0; leg < 2; leg++) {
       const cycle = Math.sin(walkingTime + leg * Math.PI);
-      const left = leg === 0 ? 0 : middle;
-      const width = leg === 0 ? middle : w - middle;
+      const left = sideFacing ? 0 : leg === 0 ? 0 : middle;
+      const width = sideFacing ? w : leg === 0 ? middle : w - middle;
       for (let y = p.root; y < h; y++) {
         const t = (y - p.root) / (h - p.root - 1);
         const ease = t * t * (3 - 2 * t);
         const bend = Math.sin(t * Math.PI) * Math.max(0, cycle);
-        const dx = (cycle * ease + bend * .35) * p.travel * stride;
+        const dx = (cycle * ease + bend * .35) * p.travel * stride * (sideFacing ? 2.4 : 1);
         const dy = -Math.max(0, cycle) * ease * p.lift * stride;
-        pixels.drawImage(player, left, y, width, 1, left + dx, y + dy, width, 1.1);
+        pixels.drawImage(sprite, left, y, width, 1, left + dx, y + dy, width, 1.1);
       }
     }
     pixels.drawImage(body, 0, 0);
@@ -191,6 +193,7 @@ let previous = performance.now();
 let walkingTime = 0;
 let stride = 0;
 let facing = 1;
+let sideFacing = false;
 function tick(now) {
   const step = Math.min((now - previous) / 1000, .04) * .19;
   previous = now;
@@ -208,7 +211,8 @@ function tick(now) {
   if (isWalkable(x, position.y)) position.x = x;
   if (isWalkable(position.x, y)) position.y = y;
   const moving = oldX !== position.x || oldY !== position.y;
-  if (dx) facing = Math.sign(dx);
+  if (dx) { facing = Math.sign(dx); sideFacing = true; }
+  else if (dy) sideFacing = false;
   const seconds = step / .19;
   stride += ((moving ? 1 : 0) - stride) * Math.min(1, seconds * 12);
   if (stride < .001) { stride = 0; walkingTime = 0; }
@@ -288,6 +292,7 @@ function showWardrobe(managing) {
       card.addEventListener('click', () => {
         worn = outfit;
         player = preview;
+        sidePlayer = loadImage('outfits-side/' + worn.file);
         saveWardrobe();
         showWardrobe(false);
       });

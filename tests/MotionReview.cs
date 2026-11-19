@@ -15,7 +15,7 @@ internal static class MotionReview
             for (int i = 0; i < files.Length; i++)
             using (var source = new Bitmap(files[i]))
             using (var image = new Bitmap(source))
-            using (var motion = new WalkMotion(image, Path.GetFileName(files[i])))
+            using (var motion = new WalkMotion(image, Path.GetFileName(files[i]), args.Length > 2 && args[2] == "side"))
             using (var baseline = new Bitmap(image.Width, image.Height))
             {
                 using (var bg = Graphics.FromImage(baseline)) { bg.InterpolationMode = InterpolationMode.NearestNeighbor; bg.PixelOffsetMode = PixelOffsetMode.Half; bg.DrawImageUnscaled(image, 0, 0); }

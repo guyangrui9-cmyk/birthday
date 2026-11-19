@@ -7,3 +7,9 @@ Long skirts keep the garment connected and move the exposed shoes only. Short sk
 The renderer displaces narrow horizontal strips with zero displacement and zero slope at the attachment, replacing the old rigid half-image rotations. The original upper body remains unchanged. Windows caches the intact body layer for each outfit; the web renderer caches it by image.
 
 Validation: compile Windows, run its movement self-test, and compile tests/MotionReview.cs together with WalkMotion.cs and the embedded CSV. The review checks all 21 outfits at rest and four walking phases, asserts original rest pixels and unchanged upper-body pixels, requires visible motion for every outfit, and saves a contact sheet for visual inspection. macOS source and packaging syntax are checked on Windows; the macOS application itself must be checked on a Mac.
+
+## Horizontal views
+
+All 21 outfits now have a separately drawn right-facing profile in 图像素材/人物/侧面装扮, sourced from 侧面原图.png. The asset preparation tool slices the 7-by-3 atlas and normalizes each profile to a 177px height. Leftward walking mirrors the side sprite; upward/downward input restores the front view. Idle retains the last view, and diagonal input with a horizontal component uses the side view. Outfit changes select the matching side sprite.
+
+Side gait layers the farther leg behind the near leg and uses continuous small forward/back steps. Long garments keep their clothing-specific covered leg regions. Windows resources and macOS packaging include all side assets. The movement self-test checks left/right orientation, idle retention, vertical reset and asset availability; MotionReview accepts a third argument to check side rendering.

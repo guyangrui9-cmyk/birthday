@@ -48,6 +48,7 @@ const outfitFiles = fs.readdirSync(outfitDir).filter(file => /^\d\d-.+\.png$/u.t
 assert(outfitFiles.length, 'Wardrobe library is empty.');
 for (const file of outfitFiles) {
   zip.addFile(resources + 'assets/outfits/' + file, fs.readFileSync(path.join(outfitDir, file)));
+  zip.addFile(resources + 'assets/outfits-side/' + file, fs.readFileSync(path.join(assets, '人物', '侧面装扮', file)));
 }
 const profiles = Object.fromEntries(fs.readFileSync(path.join(project, '代码', 'walk-profiles.csv'), 'utf8').trim().split(/\r?\n/).slice(1).map(line => {
   const [id, kind, root, left, right, travel, lift] = line.split(',');
