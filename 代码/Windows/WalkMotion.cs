@@ -80,7 +80,7 @@ internal sealed class WalkMotion : IDisposable
                 float t = (y - profile.Root) / (float)(image.Height - profile.Root - 1);
                 // Continuous deformation has zero displacement and zero slope
                 // at the hip/hem. Feet move mainly in depth, not sideways.
-                float ease = t * t * (3 - 2 * t);
+                float ease = sideView ? t : t * t * (3 - 2 * t);
                 float swing = Math.Max(0, (float)Math.Cos(phase + leg * Math.PI));
                 float bend = (float)Math.Sin(t * Math.PI) * swing;
                 // Front/back depth steps keep the inseam anchored. Opposing
@@ -91,7 +91,7 @@ internal sealed class WalkMotion : IDisposable
                 float vertical = sideView ? -swing * .45f : cycle * 1.45f - swing * profile.Lift * .46f;
                 float dy = vertical * ease * amount;
                 float nextT = Math.Min(1f, t + 1f / (image.Height - profile.Root - 1));
-                float nextEase = nextT * nextT * (3 - 2 * nextT);
+                float nextEase = sideView ? nextT : nextT * nextT * (3 - 2 * nextT);
                 float nextDy = vertical * nextEase * amount;
                 float rowHeight = Math.Max(.4f, 1 + nextDy - dy + .25f);
                 g.DrawImage(image, new RectangleF(left + dx, y + dy, width, rowHeight),

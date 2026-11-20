@@ -74,14 +74,14 @@ function drawWalkingPlayer() {
       const width = sideFacing ? w : leg === 0 ? middle + 1 : w - middle + 1;
       for (let y = p.root; y < h; y++) {
         const t = (y - p.root) / (h - p.root - 1);
-        const ease = t * t * (3 - 2 * t);
+        const ease = sideFacing ? t : t * t * (3 - 2 * t);
         const swing = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
         const bend = Math.sin(t * Math.PI) * swing;
         const dx = sideFacing ? Math.round((cycle * ease + bend * .25) * p.travel * stride * 3.8) : 0;
         const vertical = sideFacing ? -swing * .45 : cycle * 1.45 - swing * p.lift * .46;
         const dy = vertical * ease * stride;
         const nextT = Math.min(1, t + 1 / (h - p.root - 1));
-        const nextEase = nextT * nextT * (3 - 2 * nextT);
+        const nextEase = sideFacing ? nextT : nextT * nextT * (3 - 2 * nextT);
         const nextDy = vertical * nextEase * stride;
         const rowHeight = Math.max(.4, 1 + nextDy - dy + .25);
         pixels.drawImage(sprite, left, y, width, 1, left + dx, y + dy, width, rowHeight);
