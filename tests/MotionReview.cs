@@ -41,6 +41,7 @@ internal static class MotionReview
                 using (var bg = Graphics.FromImage(baseline)) { bg.InterpolationMode = InterpolationMode.NearestNeighbor; bg.PixelOffsetMode = PixelOffsetMode.Half; bg.DrawImageUnscaled(image, 0, 0); }
                 int changes = 0, legChanges = 0, armChanges = 0, upperArmChanges = 0;
                 var profile = WalkMotion.Profiles[Path.GetFileName(files[i]).Substring(0,2)];
+                if(!motion.ArmWarpIsContinuous()) throw new Exception("Arm deformation folds or disconnects: "+files[i]);
                 for (int pose = 0; pose < 17; pose++)
                 using (var frame = new Bitmap(image.Width, image.Height))
                 using (var fg = Graphics.FromImage(frame))

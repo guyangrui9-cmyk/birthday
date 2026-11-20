@@ -63,7 +63,18 @@ internal sealed class WalkMotion : IDisposable
         float d=Math.Abs(x-center)/radius;
         float weight=d>=1 ? 0 : (1-d*d)*(1-d*d);
         float direction=sideView || x<original.Width/2f ? -1 : 1;
-        return direction*swing*anchor*fade*weight*(sideView ? 4f : 1.5f);
+        return direction*swing*anchor*fade*weight*(sideView ? 5.2f : 2.1f);
+    }
+
+    internal bool ArmWarpIsContinuous()
+    {
+        for(int y=84;y<wristEnd;y++) for(int sign=-1;sign<=1;sign+=2)
+            for(int x=0;x<original.Width-1;x++)
+            {
+                float span=1+ArmOffset(x+1,y,sign)-ArmOffset(x,y,sign);
+                if(span<=.1f || span>=1.9f) return false;
+            }
+        return true;
     }
 
     private void PrepareArmPose(float phase,float amount)
