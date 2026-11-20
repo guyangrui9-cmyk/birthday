@@ -52,17 +52,30 @@ internal sealed class WalkMotion : IDisposable
         profile=Profiles[file.Substring(0,2)];
         int[] ends={127,124,123,119,129,120,125,120,120,123,117,125,121,124,122,121,122,121,119,123,125};
         wristEnd=ends[int.Parse(file.Substring(0,2))-1];
-        if(side && file.StartsWith("17-"))
+        if(side && (file.StartsWith("17-") || file.StartsWith("18-")))
         {
             jacketBody=source.Clone(new Rectangle(0,0,source.Width,source.Height),System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             jacketArm=new Bitmap(25,49);
             using(var outline=new System.Drawing.Drawing2D.GraphicsPath())
             {
                 outline.AddPolygon(new PointF[]{new PointF(35,79),new PointF(43,87),new PointF(40,109),new PointF(35,125),new PointF(26,125),new PointF(23,120),new PointF(22,108),new PointF(27,85)});
-                for(int y=79;y<126;y++) for(int x=20;x<45;x++) if(outline.IsVisible(x,y))
+                                bool bareArm=file.StartsWith("18-");
+                var bareMask=new bool[source.Width,source.Height];
+                if(bareArm)
+                    for(int y=79;y<123;y++) for(int x=22;x<44;x++)
+                    {
+                        Color skin=source.GetPixel(x,y);
+                        if(skin.A>200 && skin.R>185 && skin.R-skin.G>25 && skin.G-skin.B>10)
+                            for(int edge=Math.Max(20,x-1);edge<=Math.Min(44,x+1);edge++)
+                            {
+                                Color neighbor=source.GetPixel(edge,y);
+                                if(edge==x || (neighbor.R<75 && neighbor.G<75 && neighbor.B<75)) bareMask[edge,y]=true;
+                            }
+                    }
+                for(int y=79;y<126;y++) for(int x=20;x<45;x++) if(bareArm ? bareMask[x,y] : outline.IsVisible(x,y))
                 {
                     jacketArm.SetPixel(x-20,y-79,source.GetPixel(x,y));
-                    if(y>=86) jacketBody.SetPixel(x,y,x>=32 ? source.GetPixel(44,y) : Color.Transparent);
+                    if(y>=86) jacketBody.SetPixel(x,y,x>=(bareArm ? 40 : 32) ? source.GetPixel(44,y) : Color.Transparent);
                 }
             }
         }
