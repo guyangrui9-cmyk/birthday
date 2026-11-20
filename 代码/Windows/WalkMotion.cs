@@ -14,7 +14,10 @@ internal sealed class WalkMotion : IDisposable
         internal float Travel, Lift;
     }
     internal static readonly Dictionary<string, Profile> Profiles = ReadProfiles();
-    private readonly Bitmap image, body, original, arms;
+    private Bitmap image, body;
+    private readonly Bitmap original;
+    private readonly Dictionary<int,Tuple<Bitmap,Bitmap>> armPoses=new Dictionary<int,Tuple<Bitmap,Bitmap>>();
+    private readonly int wristEnd;
     private readonly float armScale;
     private readonly bool sideArm;
     private readonly Profile profile;
@@ -42,83 +45,57 @@ internal sealed class WalkMotion : IDisposable
 
     internal WalkMotion(Bitmap source, string file, bool side)
     {
-        original = source;
-        image = source.Clone(new Rectangle(0,0,source.Width,source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-        arms = new Bitmap(source.Width,source.Height);
-        armScale = file.StartsWith("04-") ? .2f : file.StartsWith("08-") ? .45f : 1f;
-        sideArm = side && !file.StartsWith("04-");
-        sideView = side;
-        profile = Profiles[file.Substring(0, 2)];
-        var mask=new bool[source.Width,source.Height];
-        for(int y=103;y<143;y++) for(int x=2;x<source.Width-2;x++)
-        {
-            Color c=source.GetPixel(x,y);
-            bool region=side ? x>source.Width*.48 && x<source.Width*.9 : x<source.Width*.34 || x>source.Width*.66;
-            if(region && c.A>200 && c.R>180 && c.G>105 && c.G<235 && c.B<220 && c.R-c.G>12 && c.G-c.B>7)
-                for(int yy=Math.Max(100,y-6);yy<=y;yy++) for(int xx=x-1;xx<=x+1;xx++) mask[xx,yy]=true;
-        }
-        if(sideArm)
-        {
-            Array.Clear(mask,0,mask.Length);
-            using(var outline=new System.Drawing.Drawing2D.GraphicsPath())
-            {
-                outline.AddPolygon(new PointF[]{new PointF(source.Width*.56f,84),new PointF(source.Width*.66f,91),new PointF(source.Width*.63f,110),new PointF(source.Width*.59f,132),new PointF(source.Width*.44f,132),new PointF(source.Width*.40f,114),new PointF(source.Width*.43f,92)});
-                for(int y=84;y<133;y++) for(int x=1;x<source.Width-1;x++)
-                    mask[x,y]=outline.IsVisible(x,y) && source.GetPixel(x,y).A>0;
-            }
-            // Outfit-specific wrist boundaries: the shared polygon must never
-            // extend into trousers, skirt fabric, or an exposed leg below it.
-            int[] wristEnds={127,124,123,119,129,120,125,120,120,123,117,125,121,124,122,121,122,121,119,123,125};
-            int bottom=wristEnds[int.Parse(file.Substring(0,2))-1];
-            int lastLeft=-1,lastRight=-1;
-            for(int y=84;y<143;y++)
-            {
-                if(y>=bottom)
-                { for(int x=0;x<source.Width;x++) mask[x,y]=false; continue; }
-                if(y<bottom-12) continue;
-                int skinLeft=source.Width,skinRight=-1;
-                for(int x=1;x<source.Width-1;x++) if(mask[x,y])
-                {
-                    Color c=source.GetPixel(x,y);
-                    if(c.A>200 && c.R>185 && c.G>95 && c.G<230 && c.B<210 && c.R-c.G>25 && c.G-c.B>10)
-                    {skinLeft=Math.Min(skinLeft,x);skinRight=Math.Max(skinRight,x);}
-                }
-                if(skinRight>=skinLeft){lastLeft=skinLeft-1;lastRight=skinRight+1;}
-                if(lastLeft>=0)
-                    for(int x=0;x<source.Width;x++) if(x<lastLeft || x>lastRight) mask[x,y]=false;
-            }
-        }
-        for(int y=84;y<143;y++) for(int x=1;x<source.Width-1;x++) if(mask[x,y])
-        {
-            arms.SetPixel(x,y,source.GetPixel(x,y));
-            int inward=sideArm ? 1 : side || x>source.Width/2 ? -1 : 1;
-            int sample=x;
-            while(sample>0 && sample<source.Width-1 && mask[sample,y]) sample+=inward;
-                        Color fill=source.GetPixel(sample,y);
-            if(fill.A<200)
-            {
-                for(int distance=1;distance<source.Width;distance++)
-                {
-                    int candidate=x+inward*distance;
-                    if(candidate<0 || candidate>=source.Width) break;
-                    if(!mask[candidate,y] && source.GetPixel(candidate,y).A>200)
-                    { fill=source.GetPixel(candidate,y); break; }
-                }
-                if(fill.A<200) fill=source.GetPixel(x,y);
-            }
-            if(!sideArm || y>=90) image.SetPixel(x,y,fill);
-        }
-        body = image.Clone(new Rectangle(0, 0, source.Width, source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-        // Preserve skirt sides; remove only the authored leg region.
-        if (profile.Kind != "gown")
-            for (int y = profile.Root; y < body.Height; y++)
-                for (int x = 0; x < body.Width; x++)
-                    body.SetPixel(x, y, Color.Transparent);
+        original=source; image=source;
+        sideView=side; sideArm=side && !file.StartsWith("04-");
+        armScale=file.StartsWith("04-") ? .1f : file.StartsWith("08-") ? .45f : 1f;
+        profile=Profiles[file.Substring(0,2)];
+        int[] ends={127,124,123,119,129,120,125,120,120,123,117,125,121,124,122,121,122,121,119,123,125};
+        wristEnd=ends[int.Parse(file.Substring(0,2))-1];
     }
 
+    private float ArmOffset(float x,int y,float swing)
+    {
+        float t=(y-84f)/(wristEnd-84f);
+        float anchor=(float)Math.Sin(Math.Min(1,t)*Math.PI/2);
+        float fade=Math.Min(1,(wristEnd-y)/5f);
+        float center=sideView ? original.Width*.53f : x<original.Width/2f ? original.Width*.22f : original.Width*.78f;
+        float radius=original.Width*(sideView ? .24f : .18f);
+        float d=Math.Abs(x-center)/radius;
+        float weight=d>=1 ? 0 : (1-d*d)*(1-d*d);
+        float direction=sideView || x<original.Width/2f ? -1 : 1;
+        return direction*swing*anchor*fade*weight*(sideView ? 4f : 1.5f);
+    }
+
+    private void PrepareArmPose(float phase,float amount)
+    {
+        int pose=((int)Math.Round(phase/(Math.PI*2)*32)%32+32)%32;
+        int strength=(int)Math.Round(amount*4);
+        int key=pose*5+strength;
+        Tuple<Bitmap,Bitmap> cached;
+        if(!armPoses.TryGetValue(key,out cached))
+        {
+            if(armPoses.Count>=40) { foreach(var pair in armPoses.Values){pair.Item1.Dispose();pair.Item2.Dispose();} armPoses.Clear(); }
+            var warped=original.Clone(new Rectangle(0,0,original.Width,original.Height),System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            float swing=(float)Math.Sin(pose*Math.PI*2/32)*strength/4f*armScale;
+            // Inverse sampling defines every destination pixel. A continuous,
+            // monotone warp cannot open a cutout seam or require torso inpainting.
+            for(int y=84;y<wristEnd;y++) for(int x=0;x<original.Width;x++)
+            {
+                float sx=x;
+                for(int iteration=0;iteration<10;iteration++) sx=x-ArmOffset(sx,y,swing);
+                int sample=Math.Max(0,Math.Min(original.Width-1,(int)Math.Round(sx)));
+                warped.SetPixel(x,y,original.GetPixel(sample,y));
+            }
+            var upper=warped.Clone(new Rectangle(0,0,warped.Width,warped.Height),System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            if(profile.Kind!="gown") for(int y=profile.Root;y<upper.Height;y++) for(int x=0;x<upper.Width;x++) upper.SetPixel(x,y,Color.Transparent);
+            cached=Tuple.Create(warped,upper);armPoses.Add(key,cached);
+        }
+        image=cached.Item1;body=cached.Item2;
+    }
     internal void Draw(Graphics g, float phase, float amount)
     {
         if (amount < .001f) { g.DrawImageUnscaled(original, 0, 0); return; }
+        PrepareArmPose(phase,amount);
         if (profile.Kind == "gown")
         {
             g.DrawImageUnscaled(image, 0, 0);
@@ -132,7 +109,7 @@ internal sealed class WalkMotion : IDisposable
                     float x = image.Width / 2f + (sideView ? cycle * 6 : leg == 0 ? -11 : 3);
                     g.FillRectangle(shoe, x, 175 + (sideView ? 0 : cycle - lift * .3f) * amount, 8, 5 * amount);
                 }
-            DrawArms(g,phase,amount); return;
+            return;
         }
         int middle = image.Width / 2;
         for (int leg = 0; leg < 2; leg++)
@@ -164,40 +141,8 @@ internal sealed class WalkMotion : IDisposable
             }
         }
         g.DrawImageUnscaled(body, 0, 0);
-        DrawArms(g,phase,amount);
+
     }
 
-    private void DrawArms(Graphics g,float phase,float amount)
-    {
-        if(sideArm)
-        {
-            // Rotate a tightly cropped sleeve-and-arm layer around its shoulder.
-            // The unchanged shoulder cap overlaps the moving sleeve attachment.
-            int cropX=(int)(image.Width*.38f), cropRight=(int)Math.Ceiling(image.Width*.70f);
-            var crop=new Rectangle(cropX,88,cropRight-cropX,55);
-            using(var patch=arms.Clone(crop,System.Drawing.Imaging.PixelFormat.Format32bppArgb))
-            {
-                var state=g.Save();
-                g.SetClip(new Rectangle(0,80,image.Width,68),System.Drawing.Drawing2D.CombineMode.Intersect);
-                float pivotX=image.Width*.57f;
-                g.TranslateTransform(pivotX,87);
-                g.RotateTransform(-(float)Math.Sin(phase)*10f*amount*armScale);
-                g.DrawImage(patch,new RectangleF(cropX-pivotX,1,patch.Width,patch.Height),new RectangleF(0,0,patch.Width,patch.Height),GraphicsUnit.Pixel);
-                g.Restore(state);
-            }
-            return;
-        }
-        int middle=image.Width/2;
-        for(int side=0;side<2;side++)
-        {
-            int left=side==0 ? 0 : middle, width=side==0 ? middle : image.Width-middle;
-            for(int y=100;y<143;y++)
-            {
-                float reach=Math.Min(1,(y-100)/30f);
-                float swing=(float)Math.Sin(phase+(side==0 ? Math.PI : 0))*amount*armScale*reach;
-                g.DrawImage(arms,new RectangleF(left+(sideView ? swing*2.2f : swing*.6f),y+(sideView ? 0 : swing*.8f),width,1.2f),new RectangleF(left,y,width,1),GraphicsUnit.Pixel);
-            }
-        }
-    }
-    public void Dispose() { body.Dispose(); image.Dispose(); arms.Dispose(); }
+    public void Dispose() { foreach(var pair in armPoses.Values){pair.Item1.Dispose();pair.Item2.Dispose();} armPoses.Clear(); }
 }
