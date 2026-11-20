@@ -69,7 +69,7 @@ internal sealed class WalkMotion : IDisposable
                             for(int edge=Math.Max(20,x-1);edge<=Math.Min(44,x+1);edge++)
                             {
                                 Color neighbor=source.GetPixel(edge,y);
-                                if(edge==x || (neighbor.R<75 && neighbor.G<75 && neighbor.B<75)) bareMask[edge,y]=true;
+                                bareMask[edge,y]=true;
                             }
                     }
                 for(int y=79;y<126;y++) for(int x=20;x<45;x++) if(bareArm ? bareMask[x,y] : outline.IsVisible(x,y))
@@ -78,7 +78,32 @@ internal sealed class WalkMotion : IDisposable
                     if(y>=86) jacketBody.SetPixel(x,y,x>=(bareArm ? 40 : 32) ? source.GetPixel(44,y) : Color.Transparent);
                 }
             }
+            // Reconstruct one continuous torso/hip silhouette under the arm.
+            // Sparse skin extraction must not leave holes between sleeve and waist.
+            bool sleeveless=file.StartsWith("18-");
+            for(int y=86;y<126;y++)
+            {
+                int left=sleeveless ? (y<111 ? 36 : y<119 ? 35 : 33) : (y<115 ? 33 : 31);
+                Color cloth=source.GetPixel(46,y);
+                if(cloth.A<240 || cloth.R+cloth.G+cloth.B<75)
+                    for(int sample=43;sample<54;sample++)
+                    {
+                        Color candidate=source.GetPixel(sample,y);
+                        if(candidate.A>240 && candidate.R+candidate.G+candidate.B>100)
+                        {cloth=candidate;break;}
+                    }
+                if(cloth.A<240) cloth=y<118 ? Color.FromArgb(139,164,192) : Color.FromArgb(58,70,90);
+                for(int x=left;x<=44;x++) jacketBody.SetPixel(x,y,x==left ? Color.FromArgb(38,32,29) : cloth);
+            }
         }
+    }
+
+    internal bool UnderArmBackingSolid()
+    {
+        if(jacketBody==null) return true;
+        for(int y=86;y<126;y++) for(int x=37;x<=44;x++)
+            if(jacketBody.GetPixel(x,y).A<240) return false;
+        return true;
     }
 
     private float ArmOffset(float x,int y,float swing)
@@ -181,6 +206,7 @@ internal sealed class WalkMotion : IDisposable
             }
         }
         g.DrawImageUnscaled(body, 0, 0);
+        if(jacketBody!=null && profile.Root<126) g.DrawImage(jacketBody,new Rectangle(31,profile.Root,23,126-profile.Root),new Rectangle(31,profile.Root,23,126-profile.Root),GraphicsUnit.Pixel);
         if(jacketArm!=null)
         {
             var state=g.Save();
