@@ -16,6 +16,7 @@ internal sealed class WalkMotion : IDisposable
     internal static readonly Dictionary<string, Profile> Profiles = ReadProfiles();
     private readonly Bitmap image, body, original, arms;
     private readonly float armScale;
+    private readonly bool sideArm;
     private readonly Profile profile;
     private readonly bool sideView;
 
@@ -45,6 +46,7 @@ internal sealed class WalkMotion : IDisposable
         image = source.Clone(new Rectangle(0,0,source.Width,source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         arms = new Bitmap(source.Width,source.Height);
         armScale = file.StartsWith("04-") ? .2f : file.StartsWith("08-") ? .45f : 1f;
+        sideArm = side && !file.StartsWith("04-");
         sideView = side;
         profile = Profiles[file.Substring(0, 2)];
         var mask=new bool[source.Width,source.Height];
@@ -52,13 +54,23 @@ internal sealed class WalkMotion : IDisposable
         {
             Color c=source.GetPixel(x,y);
             bool region=side ? x>source.Width*.48 && x<source.Width*.9 : x<source.Width*.34 || x>source.Width*.66;
-            if(region && c.A>200 && c.R>145 && c.G>65 && c.G<195 && c.B<165 && c.R>c.G*1.18)
+            if(region && c.A>200 && c.R>180 && c.G>105 && c.G<235 && c.B<220 && c.R-c.G>12 && c.G-c.B>7)
                 for(int yy=Math.Max(100,y-6);yy<=y;yy++) for(int xx=x-1;xx<=x+1;xx++) mask[xx,yy]=true;
         }
-        for(int y=100;y<143;y++) for(int x=1;x<source.Width-1;x++) if(mask[x,y])
+        if(sideArm)
+        {
+            Array.Clear(mask,0,mask.Length);
+            using(var outline=new System.Drawing.Drawing2D.GraphicsPath())
+            {
+                outline.AddPolygon(new PointF[]{new PointF(source.Width*.56f,84),new PointF(source.Width*.66f,91),new PointF(source.Width*.63f,110),new PointF(source.Width*.59f,132),new PointF(source.Width*.44f,132),new PointF(source.Width*.40f,114),new PointF(source.Width*.43f,92)});
+                for(int y=84;y<133;y++) for(int x=1;x<source.Width-1;x++)
+                    mask[x,y]=outline.IsVisible(x,y) && source.GetPixel(x,y).A>0;
+            }
+        }
+        for(int y=84;y<143;y++) for(int x=1;x<source.Width-1;x++) if(mask[x,y])
         {
             arms.SetPixel(x,y,source.GetPixel(x,y));
-            int inward=side || x>source.Width/2 ? -1 : 1;
+            int inward=sideArm ? 1 : side || x>source.Width/2 ? -1 : 1;
             int sample=x;
             while(sample>0 && sample<source.Width-1 && mask[sample,y]) sample+=inward;
             image.SetPixel(x,y,source.GetPixel(sample,y));
@@ -124,6 +136,16 @@ internal sealed class WalkMotion : IDisposable
 
     private void DrawArms(Graphics g,float phase,float amount)
     {
+        if(sideArm)
+        {
+            var state=g.Save();
+            g.SetClip(new Rectangle(0,80,image.Width,65),System.Drawing.Drawing2D.CombineMode.Intersect);
+            g.TranslateTransform(image.Width*.57f,87);
+            g.RotateTransform(-(float)Math.Sin(phase)*7f*amount*armScale);
+            g.DrawImage(arms,new RectangleF(-image.Width*.57f,-87,arms.Width,arms.Height),new RectangleF(0,0,arms.Width,arms.Height),GraphicsUnit.Pixel);
+            g.Restore(state);
+            return;
+        }
         int middle=image.Width/2;
         for(int side=0;side<2;side++)
         {

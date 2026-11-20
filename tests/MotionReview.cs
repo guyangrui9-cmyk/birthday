@@ -39,7 +39,7 @@ internal static class MotionReview
             using (var baseline = new Bitmap(image.Width, image.Height))
             {
                 using (var bg = Graphics.FromImage(baseline)) { bg.InterpolationMode = InterpolationMode.NearestNeighbor; bg.PixelOffsetMode = PixelOffsetMode.Half; bg.DrawImageUnscaled(image, 0, 0); }
-                int changes = 0, legChanges = 0;
+                int changes = 0, legChanges = 0, armChanges = 0;
                 var profile = WalkMotion.Profiles[Path.GetFileName(files[i]).Substring(0,2)];
                 for (int pose = 0; pose < 17; pose++)
                 using (var frame = new Bitmap(image.Width, image.Height))
@@ -55,8 +55,9 @@ internal static class MotionReview
                         if ((c.A != 0 || b.A != 0) && c.ToArgb() != b.ToArgb())
                         {
                             if (pose == 0) throw new Exception("Rest changed: " + files[i]);
-                            if (y < 100) throw new Exception("Upper body changed");
+                            if (y < 80) throw new Exception("Head changed: "+files[i]+" y="+y);
                             changes++;
+                            if(y>=84 && y<110) armChanges++;
                             if (y > profile.Root + 3 && y < image.Height - 12) legChanges++;
                         }
                         int center=image.Width/2;
@@ -76,6 +77,8 @@ internal static class MotionReview
                 }
                 g.DrawString(Path.GetFileName(files[i]).Substring(0,2), font, Brushes.Black, i % 3 * 600 + 4, i / 3 * 200 + 2);
                 if (changes == 0) throw new Exception("No animation: " + files[i]);
+                if(args.Length>2 && args[2]=="side" && !Path.GetFileName(files[i]).StartsWith("04-") && armChanges<16)
+                    throw new Exception("Sleeved upper arm did not visibly swing: " + files[i]);
                 if (profile.Root < 150 && legChanges == 0) throw new Exception("Only shoes moved, calf stayed fixed: " + files[i]);
                 Console.WriteLine(Path.GetFileName(files[i]) + ": " + changes);
             }
