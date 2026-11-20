@@ -85,7 +85,7 @@ internal sealed class WalkMotion : IDisposable
                 }
                 if(fill.A<200) fill=source.GetPixel(x,y);
             }
-            if(!sideArm || y>=100) image.SetPixel(x,y,fill);
+            if(!sideArm || y>=90) image.SetPixel(x,y,fill);
         }
         body = image.Clone(new Rectangle(0, 0, source.Width, source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         // Preserve skirt sides; remove only the authored leg region.
@@ -150,14 +150,19 @@ internal sealed class WalkMotion : IDisposable
     {
         if(sideArm)
         {
-            // Keep the shoulder and upper sleeve planted; deform the forearm
-            // continuously from the elbow. No independent rigid cut can open.
-            for(int y=84;y<143;y++)
+            // Rotate a tightly cropped sleeve-and-arm layer around its shoulder.
+            // The unchanged shoulder cap overlaps the moving sleeve attachment.
+            int cropX=(int)(image.Width*.38f), cropRight=(int)Math.Ceiling(image.Width*.70f);
+            var crop=new Rectangle(cropX,88,cropRight-cropX,55);
+            using(var patch=arms.Clone(crop,System.Drawing.Imaging.PixelFormat.Format32bppArgb))
             {
-                float t=Math.Max(0,Math.Min(1,(y-100)/32f));
-                float ease=t*t*(3-2*t);
-                float dx=(float)Math.Round(-Math.Sin(phase)*4f*amount*armScale*ease);
-                g.DrawImage(arms,new RectangleF(dx,y,arms.Width,1.1f),new RectangleF(0,y,arms.Width,1),GraphicsUnit.Pixel);
+                var state=g.Save();
+                g.SetClip(new Rectangle(0,80,image.Width,68),System.Drawing.Drawing2D.CombineMode.Intersect);
+                float pivotX=image.Width*.57f;
+                g.TranslateTransform(pivotX,87);
+                g.RotateTransform(-(float)Math.Sin(phase)*10f*amount*armScale);
+                g.DrawImage(patch,new RectangleF(cropX-pivotX,1,patch.Width,patch.Height),new RectangleF(0,0,patch.Width,patch.Height),GraphicsUnit.Pixel);
+                g.Restore(state);
             }
             return;
         }

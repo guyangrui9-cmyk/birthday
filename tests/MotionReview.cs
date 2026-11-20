@@ -39,7 +39,7 @@ internal static class MotionReview
             using (var baseline = new Bitmap(image.Width, image.Height))
             {
                 using (var bg = Graphics.FromImage(baseline)) { bg.InterpolationMode = InterpolationMode.NearestNeighbor; bg.PixelOffsetMode = PixelOffsetMode.Half; bg.DrawImageUnscaled(image, 0, 0); }
-                int changes = 0, legChanges = 0, armChanges = 0;
+                int changes = 0, legChanges = 0, armChanges = 0, upperArmChanges = 0;
                 var profile = WalkMotion.Profiles[Path.GetFileName(files[i]).Substring(0,2)];
                 for (int pose = 0; pose < 17; pose++)
                 using (var frame = new Bitmap(image.Width, image.Height))
@@ -58,6 +58,7 @@ internal static class MotionReview
                             if (y < 80) throw new Exception("Head changed: "+files[i]+" y="+y);
                             changes++;
                             if(y>=84 && y<110) armChanges++;
+                            if(y>=88 && y<100) upperArmChanges++;
                             if (y > profile.Root + 3 && y < image.Height - 12) legChanges++;
                         }
                         int center=image.Width/2;
@@ -76,6 +77,7 @@ internal static class MotionReview
                         g.DrawImageUnscaled(frame, i % 3 * 600 + (pose==0 ? 0 : 1+(pose-1)/4) * 118 + (118-image.Width)/2, i / 3 * 200 + 15);
                 }
                 g.DrawString(Path.GetFileName(files[i]).Substring(0,2), font, Brushes.Black, i % 3 * 600 + 4, i / 3 * 200 + 2);
+                if(args.Length>2 && args[2]=="side" && !Path.GetFileName(files[i]).StartsWith("04-") && upperArmChanges<8) throw new Exception("Upper arm stayed fixed: "+files[i]);
                 if (changes == 0) throw new Exception("No animation: " + files[i]);
                 if(args.Length>2 && args[2]=="side" && !Path.GetFileName(files[i]).StartsWith("04-") && armChanges<16)
                     throw new Exception("Sleeved upper arm did not visibly swing: " + files[i]);
