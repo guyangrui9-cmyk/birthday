@@ -14,7 +14,8 @@ internal sealed class WalkMotion : IDisposable
         internal float Travel, Lift;
     }
     internal static readonly Dictionary<string, Profile> Profiles = ReadProfiles();
-    private readonly Bitmap image, body;
+    private readonly Bitmap image, body, original, arms;
+    private readonly float armScale;
     private readonly Profile profile;
     private readonly bool sideView;
 
@@ -40,10 +41,29 @@ internal sealed class WalkMotion : IDisposable
 
     internal WalkMotion(Bitmap source, string file, bool side)
     {
-        image = source;
+        original = source;
+        image = source.Clone(new Rectangle(0,0,source.Width,source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        arms = new Bitmap(source.Width,source.Height);
+        armScale = file.StartsWith("04-") ? .2f : file.StartsWith("08-") ? .45f : 1f;
         sideView = side;
         profile = Profiles[file.Substring(0, 2)];
-        body = source.Clone(new Rectangle(0, 0, source.Width, source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        var mask=new bool[source.Width,source.Height];
+        for(int y=103;y<143;y++) for(int x=2;x<source.Width-2;x++)
+        {
+            Color c=source.GetPixel(x,y);
+            bool region=side ? x>source.Width*.48 && x<source.Width*.9 : x<source.Width*.34 || x>source.Width*.66;
+            if(region && c.A>200 && c.R>145 && c.G>65 && c.G<195 && c.B<165 && c.R>c.G*1.18)
+                for(int yy=Math.Max(100,y-6);yy<=y;yy++) for(int xx=x-1;xx<=x+1;xx++) mask[xx,yy]=true;
+        }
+        for(int y=100;y<143;y++) for(int x=1;x<source.Width-1;x++) if(mask[x,y])
+        {
+            arms.SetPixel(x,y,source.GetPixel(x,y));
+            int inward=side || x>source.Width/2 ? -1 : 1;
+            int sample=x;
+            while(sample>0 && sample<source.Width-1 && mask[sample,y]) sample+=inward;
+            image.SetPixel(x,y,source.GetPixel(sample,y));
+        }
+        body = image.Clone(new Rectangle(0, 0, source.Width, source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         // Preserve skirt sides; remove only the authored leg region.
         if (profile.Kind != "gown")
             for (int y = profile.Root; y < body.Height; y++)
@@ -53,7 +73,7 @@ internal sealed class WalkMotion : IDisposable
 
     internal void Draw(Graphics g, float phase, float amount)
     {
-        if (amount < .001f) { g.DrawImageUnscaled(image, 0, 0); return; }
+        if (amount < .001f) { g.DrawImageUnscaled(original, 0, 0); return; }
         if (profile.Kind == "gown")
         {
             g.DrawImageUnscaled(image, 0, 0);
@@ -67,7 +87,7 @@ internal sealed class WalkMotion : IDisposable
                     float x = image.Width / 2f + (sideView ? cycle * 6 : leg == 0 ? -11 : 3);
                     g.FillRectangle(shoe, x, 175 + (sideView ? 0 : cycle - lift * .3f) * amount, 8, 5 * amount);
                 }
-            return;
+            DrawArms(g,phase,amount); return;
         }
         int middle = image.Width / 2;
         for (int leg = 0; leg < 2; leg++)
@@ -99,7 +119,22 @@ internal sealed class WalkMotion : IDisposable
             }
         }
         g.DrawImageUnscaled(body, 0, 0);
+        DrawArms(g,phase,amount);
     }
 
-    public void Dispose() { body.Dispose(); }
+    private void DrawArms(Graphics g,float phase,float amount)
+    {
+        int middle=image.Width/2;
+        for(int side=0;side<2;side++)
+        {
+            int left=side==0 ? 0 : middle, width=side==0 ? middle : image.Width-middle;
+            for(int y=100;y<143;y++)
+            {
+                float reach=Math.Min(1,(y-100)/30f);
+                float swing=(float)Math.Sin(phase+(side==0 ? Math.PI : 0))*amount*armScale*reach;
+                g.DrawImage(arms,new RectangleF(left+(sideView ? swing*2.2f : swing*.6f),y+(sideView ? 0 : swing*.8f),width,1.2f),new RectangleF(left,y,width,1),GraphicsUnit.Pixel);
+            }
+        }
+    }
+    public void Dispose() { body.Dispose(); image.Dispose(); arms.Dispose(); }
 }
