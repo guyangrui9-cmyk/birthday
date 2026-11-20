@@ -73,7 +73,19 @@ internal sealed class WalkMotion : IDisposable
             int inward=sideArm ? 1 : side || x>source.Width/2 ? -1 : 1;
             int sample=x;
             while(sample>0 && sample<source.Width-1 && mask[sample,y]) sample+=inward;
-            image.SetPixel(x,y,source.GetPixel(sample,y));
+                        Color fill=source.GetPixel(sample,y);
+            if(fill.A<200)
+            {
+                for(int distance=1;distance<source.Width;distance++)
+                {
+                    int candidate=x+inward*distance;
+                    if(candidate<0 || candidate>=source.Width) break;
+                    if(!mask[candidate,y] && source.GetPixel(candidate,y).A>200)
+                    { fill=source.GetPixel(candidate,y); break; }
+                }
+                if(fill.A<200) fill=source.GetPixel(x,y);
+            }
+            if(!sideArm || y>=100) image.SetPixel(x,y,fill);
         }
         body = image.Clone(new Rectangle(0, 0, source.Width, source.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         // Preserve skirt sides; remove only the authored leg region.
@@ -138,12 +150,15 @@ internal sealed class WalkMotion : IDisposable
     {
         if(sideArm)
         {
-            var state=g.Save();
-            g.SetClip(new Rectangle(0,80,image.Width,65),System.Drawing.Drawing2D.CombineMode.Intersect);
-            g.TranslateTransform(image.Width*.57f,87);
-            g.RotateTransform(-(float)Math.Sin(phase)*7f*amount*armScale);
-            g.DrawImage(arms,new RectangleF(-image.Width*.57f,-87,arms.Width,arms.Height),new RectangleF(0,0,arms.Width,arms.Height),GraphicsUnit.Pixel);
-            g.Restore(state);
+            // Keep the shoulder and upper sleeve planted; deform the forearm
+            // continuously from the elbow. No independent rigid cut can open.
+            for(int y=84;y<143;y++)
+            {
+                float t=Math.Max(0,Math.Min(1,(y-100)/32f));
+                float ease=t*t*(3-2*t);
+                float dx=(float)Math.Round(-Math.Sin(phase)*4f*amount*armScale*ease);
+                g.DrawImage(arms,new RectangleF(dx,y,arms.Width,1.1f),new RectangleF(0,y,arms.Width,1),GraphicsUnit.Pixel);
+            }
             return;
         }
         int middle=image.Width/2;
