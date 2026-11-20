@@ -55,7 +55,7 @@ function drawWalkingPlayer() {
     for (let leg = 0; leg < 2; leg++) {
       const cycle = Math.sin(walkingTime + leg * Math.PI);
       const lift = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
-      pixels.fillRect(w / 2 + (sideFacing ? cycle * 5 : leg === 0 ? -11 : 3), 175 + (sideFacing ? 0 : cycle - lift * .3) * stride, 8, 5 * stride);
+      pixels.fillRect(w / 2 + (sideFacing ? cycle * 6 : leg === 0 ? -11 : 3), 175 + (sideFacing ? 0 : cycle - lift * .3) * stride, 8, 5 * stride);
     }
   } else {
     let body = walkingBodies.get(sprite);
@@ -77,8 +77,8 @@ function drawWalkingPlayer() {
         const ease = t * t * (3 - 2 * t);
         const swing = Math.max(0, Math.cos(walkingTime + leg * Math.PI));
         const bend = Math.sin(t * Math.PI) * swing;
-        const dx = sideFacing ? Math.round((cycle * ease + bend * .25) * p.travel * stride * 3.2) : 0;
-        const vertical = sideFacing ? -swing * .45 : cycle * 1.2 - swing * p.lift * .4;
+        const dx = sideFacing ? Math.round((cycle * ease + bend * .25) * p.travel * stride * 3.8) : 0;
+        const vertical = sideFacing ? -swing * .45 : cycle * 1.45 - swing * p.lift * .46;
         const dy = vertical * ease * stride;
         const nextT = Math.min(1, t + 1 / (h - p.root - 1));
         const nextEase = nextT * nextT * (3 - 2 * nextT);

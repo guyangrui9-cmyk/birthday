@@ -64,7 +64,7 @@ internal sealed class WalkMotion : IDisposable
                 {
                     float cycle = (float)Math.Sin(phase + leg * Math.PI);
                     float lift = Math.Max(0, (float)Math.Cos(phase + leg * Math.PI));
-                    float x = image.Width / 2f + (sideView ? cycle * 5 : leg == 0 ? -11 : 3);
+                    float x = image.Width / 2f + (sideView ? cycle * 6 : leg == 0 ? -11 : 3);
                     g.FillRectangle(shoe, x, 175 + (sideView ? 0 : cycle - lift * .3f) * amount, 8, 5 * amount);
                 }
             return;
@@ -85,10 +85,10 @@ internal sealed class WalkMotion : IDisposable
                 float bend = (float)Math.Sin(t * Math.PI) * swing;
                 // Front/back depth steps keep the inseam anchored. Opposing
                 // horizontal shifts used to tear an artificial gap in the cloth.
-                float dx = sideView ? (float)Math.Round((cycle * ease + bend * .25f) * profile.Travel * amount * 3.2f) : 0;
+                float dx = sideView ? (float)Math.Round((cycle * ease + bend * .25f) * profile.Travel * amount * 3.8f) : 0;
                 // Side walking is a planted forward/back leg swing, not marching.
                 // Exposed calves deform from the hem, not just the shoe region.
-                float vertical = sideView ? -swing * .45f : cycle * 1.2f - swing * profile.Lift * .4f;
+                float vertical = sideView ? -swing * .45f : cycle * 1.45f - swing * profile.Lift * .46f;
                 float dy = vertical * ease * amount;
                 float nextT = Math.Min(1f, t + 1f / (image.Height - profile.Root - 1));
                 float nextEase = nextT * nextT * (3 - 2 * nextT);
