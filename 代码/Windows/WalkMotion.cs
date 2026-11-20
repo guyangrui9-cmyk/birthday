@@ -66,6 +66,27 @@ internal sealed class WalkMotion : IDisposable
                 for(int y=84;y<133;y++) for(int x=1;x<source.Width-1;x++)
                     mask[x,y]=outline.IsVisible(x,y) && source.GetPixel(x,y).A>0;
             }
+            // Outfit-specific wrist boundaries: the shared polygon must never
+            // extend into trousers, skirt fabric, or an exposed leg below it.
+            int[] wristEnds={127,124,123,119,129,120,125,120,120,123,117,125,121,124,122,121,122,121,119,123,125};
+            int bottom=wristEnds[int.Parse(file.Substring(0,2))-1];
+            int lastLeft=-1,lastRight=-1;
+            for(int y=84;y<143;y++)
+            {
+                if(y>=bottom)
+                { for(int x=0;x<source.Width;x++) mask[x,y]=false; continue; }
+                if(y<bottom-12) continue;
+                int skinLeft=source.Width,skinRight=-1;
+                for(int x=1;x<source.Width-1;x++) if(mask[x,y])
+                {
+                    Color c=source.GetPixel(x,y);
+                    if(c.A>200 && c.R>185 && c.G>95 && c.G<230 && c.B<210 && c.R-c.G>25 && c.G-c.B>10)
+                    {skinLeft=Math.Min(skinLeft,x);skinRight=Math.Max(skinRight,x);}
+                }
+                if(skinRight>=skinLeft){lastLeft=skinLeft-1;lastRight=skinRight+1;}
+                if(lastLeft>=0)
+                    for(int x=0;x<source.Width;x++) if(x<lastLeft || x>lastRight) mask[x,y]=false;
+            }
         }
         for(int y=84;y<143;y++) for(int x=1;x<source.Width-1;x++) if(mask[x,y])
         {
