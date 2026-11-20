@@ -6,7 +6,7 @@ id,kind,root,left,right,travel,lift
 05,gown,177,43,72,0.83,1.70
 06,wide-trousers,115,23,69,1.82,4.25
 07,long-skirt,163,29,66,1.68,3.60
-08,long-skirt,157,28,64,1.96,4.00
+08,short-skirt,149,28,64,2.30,4.00
 09,short-skirt,127,24,64,3.08,5.60
 10,short-skirt,145,25,65,2.52,4.80
 11,short-skirt,128,27,64,3.36,5.60
